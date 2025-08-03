@@ -1,0 +1,89 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example
+*/.env
+*/.env.local
+*/.env.development.local
+*/.env.test.local
+*/.env.production.local
+*/.env.example
+
+# Production builds
+build/
+dist/
+*/build/
+*/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*/logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*/coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Optional npm cache directory
+.npm
+*/.npm
+
+# Optional eslint cache
+.eslintcache
+*/.eslintcache
+
+# Temporary folders
+tmp/
+temp/
+*/tmp/
+*/temp/
+.claude/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# File uploads
+uploads/
+*/uploads/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# SSL certificates
+*.pem
+*.key
+*.crt

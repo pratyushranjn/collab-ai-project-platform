@@ -7,6 +7,7 @@ const AuthContext = createContext();
 const initialState = {
   user: null,
   token: localStorage.getItem('token'),
+  refreshToken: localStorage.getItem('refreshToken'),
   isLoading: true,
   isAuthenticated: false
 };
@@ -24,7 +25,8 @@ const authReducer = (state, action) => {
         isLoading: false,
         isAuthenticated: true,
         user: action.payload.user,
-        token: action.payload.token
+        token: action.payload.token,
+        refreshToken: action.payload.refreshToken
       };
     case 'AUTH_FAIL':
       return {
@@ -32,7 +34,8 @@ const authReducer = (state, action) => {
         isLoading: false,
         isAuthenticated: false,
         user: null,
-        token: null
+        token: null,
+        refreshToken: null
       };
     case 'LOGOUT':
       return {
@@ -40,7 +43,8 @@ const authReducer = (state, action) => {
         isLoading: false,
         isAuthenticated: false,
         user: null,
-        token: null
+        token: null,
+        refreshToken: null
       };
     case 'UPDATE_USER':
       return {
@@ -59,6 +63,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
       if (token) {
         try {
           const response = await api.get('/auth/me');
@@ -66,11 +72,13 @@ export const AuthProvider = ({ children }) => {
             type: 'AUTH_SUCCESS',
             payload: {
               user: response.data.data.user,
-              token
+              token,
+              refreshToken
             }
           });
         } catch (error) {
           localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
           dispatch({ type: 'AUTH_FAIL' });
         }
       } else {
@@ -86,14 +94,15 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'AUTH_START' });
       
       const response = await api.post('/auth/login', credentials);
-      const { user, token } = response.data.data;
+      const { user, token, refreshToken } = response.data.data;
 
       localStorage.setItem('token', token);
+      localStorage.setItem('refreshToken', refreshToken);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token }
+        payload: { user, token, refreshToken }
       });
 
       toast.success('Login successful!');
@@ -111,14 +120,15 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'AUTH_START' });
       
       const response = await api.post('/auth/register', userData);
-      const { user, token } = response.data.data;
+      const { user, token, refreshToken } = response.data.data;
 
       localStorage.setItem('token', token);
+      localStorage.setItem('refreshToken', refreshToken);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       dispatch({
         type: 'AUTH_SUCCESS',
-        payload: { user, token }
+        payload: { user, token, refreshToken }
       });
 
       toast.success('Registration successful!');
@@ -133,6 +143,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     delete api.defaults.headers.common['Authorization'];
     dispatch({ type: 'LOGOUT' });
     toast.success('Logged out successfully');

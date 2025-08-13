@@ -16,9 +16,15 @@ const config = require('./config/config');
 // Route imports
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
+const taskRoutes = require('./routes/tasks');
+const ideaRoutes = require('./routes/ideas');
+const documentRoutes = require('./routes/documents');
+const whiteboardRoutes = require('./routes/whiteboards');
+const chatRoutes = require('./routes/chat');
+const analyticsRoutes = require('./routes/analytics');
 
-// Connect to database
-connectDB();
+// Connect to database in the background, don't wait for it
+connectDB().catch(err => console.error('Initial DB connection failed:', err.message));
 
 const app = express();
 const server = createServer(app);
@@ -26,7 +32,9 @@ const server = createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: config.corsOrigin,
+    origin: process.env.NODE_ENV === 'production' ? 
+      config.corsOrigin || config.allowedOrigins || ['http://localhost:3000'] :
+      true, // Allow all origins in development
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -46,11 +54,64 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS
-app.use(cors({
-  origin: config.corsOrigin,
-  credentials: true
-}));
+// CORS - Explicit configuration for development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5001', 
+      'http://localhost:5173',
+      'http://localhost:3001'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Manual CORS headers as backup
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5001',
+    'http://localhost:5173', 
+    'http://localhost:3001'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+  } else {
+    next();
+  }
+});
+
+// Debug CORS issues
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  next();
+});
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
@@ -201,6 +262,12 @@ app.set('socketio', io);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/ideas', ideaRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/whiteboards', whiteboardRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

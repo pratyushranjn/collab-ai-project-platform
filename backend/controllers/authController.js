@@ -1,6 +1,8 @@
 const User = require('../models/User');
-const { generateToken } = require('../middleware/authMiddleware');
+const { generateToken, generateRefreshToken } = require('../middleware/authMiddleware');
 const { validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
+const config = require('../config/config');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -43,6 +45,7 @@ const register = async (req, res) => {
     });
 
     const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
     res.status(201).json({
       success: true,
@@ -58,7 +61,8 @@ const register = async (req, res) => {
           skills: user.skills,
           avatar: user.avatar
         },
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -120,6 +124,7 @@ const login = async (req, res) => {
     await user.save();
 
     const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
     res.json({
       success: true,
@@ -136,7 +141,8 @@ const login = async (req, res) => {
           avatar: user.avatar,
           lastLogin: user.lastLogin
         },
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -244,10 +250,66 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+// @access  Public
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token is required'
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, config.jwtSecret);
+    
+    // Get user from token
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'User account is deactivated'
+      });
+    }
+
+    // Generate new tokens
+    const newToken = generateToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        token: newToken,
+        refreshToken: newRefreshToken
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid refresh token'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  refreshToken
 };

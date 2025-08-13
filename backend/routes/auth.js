@@ -4,7 +4,8 @@ const {
   login, 
   getMe, 
   updateProfile, 
-  changePassword 
+  changePassword,
+  refreshToken
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { registerValidation, loginValidation } = require('../utils/validators');
@@ -14,6 +15,7 @@ const router = express.Router();
 // Public routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/refresh', refreshToken);
 
 // Private routes
 router.get('/me', protect, getMe);

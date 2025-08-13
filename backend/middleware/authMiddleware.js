@@ -49,8 +49,15 @@ const protect = async (req, res, next) => {
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, config.jwtSecret, {
-    expiresIn: config.jwtExpire
+    expiresIn: '1d' // Set to 1 day as requested
   });
 };
 
-module.exports = { protect, generateToken };
+// Generate Refresh Token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, config.jwtSecret, {
+    expiresIn: '7d' // Refresh token lasts 7 days
+  });
+};
+
+module.exports = { protect, generateToken, generateRefreshToken };

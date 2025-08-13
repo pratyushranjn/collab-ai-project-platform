@@ -18,33 +18,41 @@ const WhiteboardSchema = new mongoose.Schema({
     required: true
   },
   canvas: {
-    objects: [{
-      id: String,
-      type: {
-        type: String,
-        enum: ['rectangle', 'circle', 'line', 'text', 'sticky_note', 'arrow', 'image']
-      },
-      x: Number,
-      y: Number,
-      width: Number,
-      height: Number,
-      rotation: Number,
-      fill: String,
-      stroke: String,
-      strokeWidth: Number,
-      text: String,
-      fontSize: Number,
-      fontFamily: String,
-      src: String, // for images
-      createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }],
+    objects: {
+      type: [{
+        id: String,
+        type: {
+          type: String,
+          enum: ['rectangle', 'circle', 'line', 'text', 'sticky_note', 'arrow', 'image']
+        },
+        x: Number,
+        y: Number,
+        width: Number,
+        height: Number,
+        rotation: Number,
+        fill: String,
+        stroke: String,
+        strokeWidth: Number,
+        points: [Number], // for lines
+        text: String,
+        fontSize: Number,
+        fontFamily: String,
+        tension: Number,
+        lineCap: String,
+        lineJoin: String,
+        radius: Number, // for circles
+        src: String, // for images
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }],
+      default: []
+    },
     background: {
       color: {
         type: String,

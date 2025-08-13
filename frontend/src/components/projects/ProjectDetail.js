@@ -5,6 +5,9 @@ import { useSocket } from '../../context/SocketContext';
 import { projectService } from '../../services/projectService';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Button from '../common/Button';
+import TaskBoard from '../tasks/TaskBoard';
+import Ideas from '../ideas/Ideas';
+import CollaborativeWhiteboard from '../whiteboard/CollaborativeWhiteboard';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -326,33 +329,12 @@ const ProjectDetail = () => {
           </div>
         )}
 
-        {activeTab === 'tasks' && (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Tasks</h3>
-            <p className="text-gray-600">
-              Task management interface will be implemented here with Kanban boards, 
-              drag-and-drop functionality, and real-time collaboration features.
-            </p>
-          </div>
-        )}
+        {activeTab === 'tasks' && <TaskBoard />}
 
-        {activeTab === 'ideas' && (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Ideas</h3>
-            <p className="text-gray-600">
-              AI-powered idea generation and collaborative brainstorming features will be available here.
-            </p>
-          </div>
-        )}
+        {activeTab === 'ideas' && <Ideas />}
 
         {activeTab === 'whiteboard' && (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Collaborative Whiteboard</h3>
-            <p className="text-gray-600">
-              Real-time collaborative whiteboard with drawing tools, sticky notes, 
-              and mind mapping capabilities will be implemented here.
-            </p>
-          </div>
+          <CollaborativeWhiteboard projectId={project._id} />
         )}
 
         {activeTab === 'documents' && (

@@ -1,22 +1,59 @@
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+
+import LandingPage from "./pages/LandingPage";
+import Projects from "./components/Projects";
+import AIIdeas from "./pages/AIideas";
+import MindMap from "./pages/MindMap";
+import AdminPanel from "./pages/AdminPanel";
+import Dashboard from "./pages/Dashboard";
+import KanbanBoardPage from "./pages/KanbanBoard"; 
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./layouts/AppLayout";
+import ChatUI from "./pages/ChatUI";
+import ProjectForm from "./components/ProjectForm";
 
 function App() {
   return (
-    <div className="h-screen flex flex-col items-center justify-center text-center space-y-5 bg-gray-50 px-4">
-      <div className="text-3xl font-bold text-shadow-md text-shadow-sky-300">
-        Hello Team 👋
-      </div>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
 
-      <div className="max-w-xl text-lg leading-relaxed">
-        Always push your changes to a <span className="font-semibold text-blue-600">new branch</span> when working on a feature or fix —<br />
-        <span className="text-red-600 font-semibold">avoid pushing directly</span> to <code className="bg-gray-200 px-1 py-0.5 rounded">main</code> or <code className="bg-gray-200 px-1 py-0.5 rounded">master</code>.
-      </div>
+          {/* Protected pages inside Layout (Navbar + Sidebar) */}
+          <Route element={<Layout />}>
+            {/* <Route path="/home" element={<ProtectedRoute><chat /></ProtectedRoute>} /> */}
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><ChatUI /></ProtectedRoute>} />
+            <Route path="/ai" element={<ProtectedRoute><AIIdeas /></ProtectedRoute>} />
+            <Route path="/mindmap" element={<ProtectedRoute><MindMap /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
+            <Route path="/board" element={<ProtectedRoute><KanbanBoardPage /></ProtectedRoute>} /> 
+          </Route>
 
-      <div className="max-w-xl text-base text-gray-700">
-        Direct pushes can lead to <span className="font-medium text-red-500">merge conflicts</span>, which take extra time to resolve<br />
-        and can block the entire team’s progress. Let’s work clean! 🚀
-      </div>
-    </div>
+          {/* 404 Page */}
+          <Route
+            path="*"
+            element={
+              <div className="flex flex-col items-center justify-center min-h-screen 
+                    bg-gradient-to-br from-gray-900 via-black to-gray-800 text-red-500 px-6 text-center">
+                <h4 className="text-2xl md:text-3xl font-semibold mb-3">
+                  404 - Page Not Found
+                </h4>
+                <Link
+                  to="/projects"
+                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+              Go to Home
+                </Link>
+              </div>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

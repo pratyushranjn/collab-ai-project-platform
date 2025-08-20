@@ -1,37 +1,68 @@
+require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./db/db');
-const authRoute = require('./routes/AuthRoutes')
+const http = require('http');
+const setupSocket = require('./sockets/socket');
+const cookieParser = require('cookie-parser');
 
-dotenv.config();
+const authRoute = require('./routes/AuthRoutes');
+const projectRoutes = require('./routes/ProjectRoutes');
+const aiRoutes = require('./routes/aiRoutes')
+
 const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
+const server = http.createServer(app);
 
 // Connect to MongoDB
 connectDB();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174"
+];
+
+// Middlewares
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
+
+app.use(express.json());
+app.use(cookieParser());
+
+// Routes
 app.use('/api/auth', authRoute);
+app.use('/api/projects', projectRoutes);
+
+// AI Routes
+app.use("/api/ai", aiRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
   res.send('API is working');
 });
 
+// Setup Socket.IO
+const io = setupSocket(server, allowedOrigins);
+app.io = io; // access io in routes/controllers
 
-// Error Handler 
+
+// Error Handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Something went wrong';
-  res.status(statusCode).json({ success: false, error: message });
+  res.status(statusCode).json({ success: false, message }); 
 });
 
+
 // Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+

@@ -55,14 +55,21 @@ const updateUserRole = asyncWrap(async (req, res) => {
 })
 
 
-// Get all users (Admin only)
+// Get all users
 const getAllUsers = asyncWrap(async (req, res) => {
-    if (req.user.role !== 'admin') {
-        throw new ExpressError(403, 'Only admin can view all users');
+    const role = req.user.role;
+
+    if (!['admin', 'project-manager'].includes(role)) {
+        throw new ExpressError(403, 'Only admin and project manager can view users');
     }
-    const users = await User.find().select('-password');
+
+    // Fetch users excluding 'admin' role, and sort by name (A-Z)
+    const users = await User.find({ role: { $ne: 'admin' } })
+        .select('-password')
+        .sort({ name: 1 }); 
+
     res.json({ success: true, count: users.length, data: users });
-})
+});
 
 module.exports = {
     getUserById,

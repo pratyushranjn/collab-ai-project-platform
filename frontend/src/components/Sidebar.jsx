@@ -30,7 +30,7 @@ export default function Sidebar() {
 
   const links = [
     { path: "/projects", label: "Projects" },
-    { path: "/teams", label: "Teams" },
+    { path: "/task", label: "Task" },
     { path: "/ai", label: "AI Ideas" },
     { path: "/mindmap", label: "Mind Map" },
     { path: "/board", label: "Kanban Board" },

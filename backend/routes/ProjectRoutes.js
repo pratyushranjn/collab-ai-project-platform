@@ -1,4 +1,3 @@
-// routes/projectRoutes.js
 const express = require('express');
 const {
   createProject,
@@ -9,7 +8,7 @@ const {
   addMember,
   removeMember,
 } = require('../controllers/projectController');
-const { protect, authorize } = require('../middleware/AuthMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 

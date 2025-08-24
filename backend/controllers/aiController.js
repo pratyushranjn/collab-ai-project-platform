@@ -1,48 +1,38 @@
-const asyncWrap = require('../utils/asyncWrap');
-const { generateIdeas } = require('../services/aiService');
-const Idea = require('../models/Idea');
+const asyncWrap = require("../utils/asyncWrap");
+const { generateIdeas } = require("../services/aiService");
+const Idea = require("../models/Idea");
 
 const generateIdea = asyncWrap(async (req, res) => {
-    const { prompt } = req.body;
+  const userId = req.user.id;
+  const { prompt = "" } = req.body;
 
-    const aiResponse = await generateIdeas(prompt);
+  // Load recent conversation for this user
+  const recent = await Idea.find({ createdBy: userId })
+    .sort({ createdAt: 1 })
+    .select("sender text")
+    .lean();
 
-    const userMessage = new Idea({
-        text: prompt,
-        createdBy: req.user.id,
-    });
+  const history = recent.slice(-20).map(m => ({
+    role: m.sender === "user" ? "user" : "model",
+    text: m.text,
+  }));
 
-    const aiMessage = new Idea({
-        text: aiResponse,
-        sender: 'AI',        // mark as AI
-    });
+  const aiText = await generateIdeas(history, prompt);
 
-    await userMessage.save();
-    await aiMessage.save();
+  // Persist both messages 
+  const docs = await Idea.insertMany([
+    { text: prompt, createdBy: userId, sender: "user" },
+    { text: aiText, createdBy: userId, sender: "AI" },
+  ]);
 
-    res.status(201).json({
-        success: true,
-        data: [userMessage, aiMessage], // returning both
-    });
+  res.json({ success: true, data: docs[1] });
 });
+
 
 const getIdeas = asyncWrap(async (req, res) => {
-    const { userId } = req.params;
-
-    const ideas = await Idea.find({
-        $or: [
-            { createdBy: userId },
-            { sender: 'AI' }
-        ]
-    }).sort({ createdAt: 1 });
-
-    res.json({
-        success: true,
-        data: ideas,
-    });
+  const { userId } = req.params;
+  const ideas = await Idea.find({ createdBy: userId }).sort({ createdAt: 1 });
+  res.json({ success: true, data: ideas });
 });
 
-module.exports = {
-    generateIdea,
-    getIdeas,
-};
+module.exports = { generateIdea, getIdeas };

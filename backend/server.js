@@ -3,11 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db/db');
 const http = require('http');
-const setupSocket = require('./sockets/socket');
+const setupSocket = require('./sockets/Socket');
 const cookieParser = require('cookie-parser');
 
 const authRoute = require('./routes/AuthRoutes');
 const projectRoutes = require('./routes/ProjectRoutes');
+const taskRoutes = require("./routes/taskRoutes");
+const userRoutes = require("./routes/userRoutes");
 const aiRoutes = require('./routes/aiRoutes')
 
 const app = express();
@@ -37,10 +39,14 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoute);
+app.use('/api/users', userRoutes)
 app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes)
 
 // AI Routes
 app.use("/api/ai", aiRoutes);
+
+
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -50,6 +56,7 @@ app.get('/', (req, res) => {
 // Setup Socket.IO
 const io = setupSocket(server, allowedOrigins);
 app.io = io; // access io in routes/controllers
+app.set("io", io);
 
 
 // Error Handler

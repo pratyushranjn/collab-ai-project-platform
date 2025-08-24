@@ -173,6 +173,8 @@ export default function AuthModal({ isOpen, onClose }) {
                 >
                   <option value="user">User</option>
                   <option value="project-manager">Project Manager</option>
+
+                  {/* Later we can remove direct admin resgistration from here */}
                   <option value="admin">Admin</option>
                 </select>
               </div>

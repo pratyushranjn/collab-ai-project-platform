@@ -1,109 +1,87 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, Outlet } from "react-router-dom";
 import api from "../api/api";
+import { useNavigate } from "react-router-dom";
 
-function Project() {
-  const { projectId } = useParams();
-  const [project, setProject] = useState(null);
+export default function Projects() {
   const [loading, setLoading] = useState(true);
-  const [newMemberId, setNewMemberId] = useState("");
+  const [projects, setProjects] = useState([]);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const fetchProject = async () => {
+  const fetchProjects = async () => {
     try {
-      const res = await api.get(`/projects/${projectId}`);
-      setProject(res.data.data);
-    } catch (err) {
-      console.error("Error fetching project:", err);
+      setLoading(true);
+      const res = await api.get("/projects");
+      setProjects(res.data.data || []);
+    } catch (e) {
+      setError(e.response?.data?.message || "Failed to load projects");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProject();
-  }, [projectId]);
+    fetchProjects();
+  }, []);
 
-  const addMember = async () => {
-    if (!newMemberId.trim()) return;
-    try {
-      await api.post(`/projects/${projectId}/members`, { memberId: newMemberId });
-      setNewMemberId("");
-      fetchProject();
-    } catch (err) {
-      setError("Failed to add member");
-    }
+  const creatorName = (p) =>
+    typeof p?.createdBy === "object" ? (p.createdBy?.name || "Unknown") : "Unknown";
+
+  const pmName = (p) => {
+    const pm = p?.projectManager;
+    if (!pm) return "Not assigned";
+    return typeof pm === "object" ? (pm.name || "Unknown") : pm;
   };
-
-  const removeMember = async (memberId) => {
-    try {
-      await api.delete(`/projects/${projectId}/members/${memberId}`);
-      fetchProject();
-    } catch (err) {
-      setError("Failed to remove member");
-    }
-  };
-
-  if (loading) return <p className="text-white">Loading project...</p>;
-  if (!project) return <p className="text-red-500">Project not found</p>;
 
   return (
-    <div className="p-6 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-2">{project.name}</h1>
-      <p className="mb-6 text-gray-300">{project.description}</p>
+    <div className="max-w-3xl mx-auto p-4">
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen text-center">
+          <div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading your projects...</p>
+          </div>
+        </div>
+      ) : projects.length === 0 ? (
+        <p>No projects yet.</p>
+      ) : (
+        <ul className="grid gap-3">
+          {projects.map((p) => (
+            <li key={p._id} className="border border-gray-300 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold">{p.name}</h3>
+                  <small className="text-gray-500 block">{p.description}</small>
 
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Members</h2>
-        <ul className="mb-4">
-          {project.members.map((m) => (
-            <li key={m._id} className="flex justify-between items-center bg-gray-800 p-2 rounded mb-2">
-              <span>{m.name} ({m.email})</span>
-              <button
-                onClick={() => removeMember(m._id)}
-                className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
-              >
-                Remove
-              </button>
+                  <p className="mt-1 text-sm text-gray-600">
+                    <span className="font-medium text-gray-700">Created by:</span>{" "}
+                    <span className="italic">{p?.createdBy?.name || "Unknown"}</span>
+                    <span className="mx-2 text-gray-400">|</span>
+                    <span className="font-medium text-gray-700">Project Manager:</span>{" "}
+                    <span className="italic">{p?.projectManager?.name || "Not assigned"}</span>
+                  </p>
+
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate(`/projects/${p._id}`)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition cursor-pointer"
+                  >
+                    Open
+                  </button>
+                </div>
+              </div>
+
+              {p.members?.length ? (
+                <div className="mt-2">
+                  <small className="text-gray-600">Members: {p.members.length}</small>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMemberId}
-            onChange={(e) => setNewMemberId(e.target.value)}
-            placeholder="Enter userId..."
-            className="flex-1 p-2 rounded text-black"
-          />
-          <button
-            onClick={addMember}
-            className="bg-blue-500 px-3 py-2 rounded hover:bg-blue-600"
-          >
-            Add Member
-          </button>
-        </div>
-        {error && <p className="text-red-400 mt-2">{error}</p>}
-      </div>
-
-      {/* Links to tools */}
-      <div className="flex gap-4 mb-6">
-        <Link
-          to={`/project/${projectId}/ai`}
-          className="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          AI Ideas
-        </Link>
-        <Link
-          to={`/project/${projectId}/tasks`}
-          className="bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          Tasks
-        </Link>
-      </div>
-
-      <Outlet />
+      )}
     </div>
   );
 }
-
-export default Project;

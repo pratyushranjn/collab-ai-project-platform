@@ -1,136 +1,176 @@
-const Project = require('../models/Project')
+const mongoose = require('mongoose');
+const Project = require('../models/Project');
+const Task = require('../models/Task'); 
 const User = require('../models/user');
-const asyncWrap = require('../utils/asyncWrap')
-const ExpressError = require('../utils/ExpressError')
+const asyncWrap = require('../utils/asyncWrap');
+const ExpressError = require('../utils/ExpressError');
+
+
+// Helpers for inline ACL on members
+function ensureAdminOrThisPM(user, project) {
+  const isAdmin = user.role === 'admin';
+  const isPM = project.projectManager && project.projectManager.toString() === user.id;
+  if (!isAdmin && !isPM) {
+    throw new ExpressError(403, 'Only admin or this project’s manager can manage members');
+  }
+}
 
 // Create a new project (admin only)
 const createProject = asyncWrap(async (req, res) => {
-    if (req.user.role != 'admin') {
-        throw new ExpressError(403, 'Unauthorized: Admins only');
-    }
+  if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
 
-    const { name, description, members } = req.body;
+  const { name, description, members = [], projectManager } = req.body;
+  if (!name || !description) throw new ExpressError(400, 'Project name and description is required');
 
-    if (!name || !description) {
-        throw new ExpressError(400, 'Project name and description is required');
-    }
+  // Validate PM if provided
+  let pmId = null;
+  if (projectManager) {
+    const pmUser = await User.findById(projectManager);
+    if (!pmUser) throw new ExpressError(404, 'Project manager user not found');
+    if (pmUser.role !== 'project-manager') throw new ExpressError(400, 'User is not a project manager');
+    pmId = pmUser._id;
+  }
 
-    const project = await Project.create({
-        name, description,
-        members,
-        createdBy: req.user.id
-    })
+  const project = await Project.create({
+    name,
+    description,
+    members,
+    createdBy: req.user.id,
+    ...(pmId ? { projectManager: pmId } : {}),
+  });
 
-    res.status(201).json({ success: true, data: project });
+  const populated = await Project.findById(project._id)
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
 
-})
+  res.status(201).json({ success: true, data: populated });
+});
 
-// Get all projects
+// Get all projects (hide unrelated projects for non-admins)
 const getProjects = asyncWrap(async (req, res) => {
-    const projects = await Project.find()
-        .populate('members', 'name email role')
-        .populate('crestedBy', 'name email')
+  const query = req.user.role === 'admin'
+    ? {}
+    : { $or: [{ members: req.user.id }, { createdBy: req.user.id }, { projectManager: req.user.id }] };
 
-    res.json({ success: true, data: projects });
+  const projects = await Project.find(query)
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
 
-})
+  res.json({ success: true, data: projects });
+});
 
 // Get single project by id
 const getProjectById = asyncWrap(async (req, res) => {
-    const project = await Project.findById(req.params.id)
-        .populate('members', 'name email role')
-        .populate('createdBy', 'name email');
+  const project = await Project.findById(req.params.id)
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
 
-    if (!project) {
-        throw new ExpressError(404, 'Project not found');
-    }
+  if (!project) throw new ExpressError(404, 'Project not found');
 
-    res.json({ success: true, data: project });
-})
-
+  res.json({ success: true, data: project });
+});
 
 // Update project (admin only)
 const updateProject = asyncWrap(async (req, res) => {
-    if (req.user.role !== 'admin') {
-        throw new ExpressError(403, 'Unauthorized: Admins only');
-    }
+  if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
 
-    const updates = req.body;
-    const project = await Project.findByIdAndUpdate(req.params.id, updates, {
-        new: true,
-        runValidators: true,
-    })
+  const updates = { ...req.body };
 
-    if (!project) {
-        throw new ExpressError(404, 'Project not found');
-    }
+  // If updating PM, validate role
+  if (updates.projectManager) {
+    const pmUser = await User.findById(updates.projectManager);
+    if (!pmUser) throw new ExpressError(404, 'Project manager user not found');
+    if (pmUser.role !== 'project-manager') throw new ExpressError(400, 'User is not a project manager');
+  }
 
-    res.json({ success: true, data: project });
-})
+  const project = await Project.findByIdAndUpdate(req.params.id, updates, {
+    new: true,
+    runValidators: true,
+  })
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
 
+  if (!project) throw new ExpressError(404, 'Project not found');
+
+  res.json({ success: true, data: project });
+});
 
 // Delete project (admin only)
 const deleteProject = asyncWrap(async (req, res) => {
-    if (req.user.role !== 'admin') {
-        throw new ExpressError(403, 'Unauthorized: Admins only');
-    }
+  if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
 
-    const project = await Project.findByIdAndDelete(req.params.id)
+  const project = await Project.findByIdAndDelete(req.params.id);
+  if (!project) throw new ExpressError(404, 'Project not found');
 
-    if (!project) {
-        throw new ExpressError(404, 'Project not found');
-    }
+  // Delete all tasks belonging to this project
+  const { deletedCount } = await Task.deleteMany({ project: project._id });
 
-    res.json({ success: true, message: 'Project deleted' });
-
-})
-
-
-// Add member to project
-const addMember = asyncWrap(async (req, res) => {
-    const { memberId } = req.body;
-    const project = await Project.findById(req.params.id);
-    if (!project) throw new ExpressError(404, 'Project not found');
-
-    const user = await User.findById(memberId);
-    if (!user) throw new ExpressError(404, 'User not found');
-
-    if (project.members.includes(memberId)) {
-        throw new ExpressError(400, 'User already a member of this project');
-    }
-
-    project.members.push(memberId);
-    await project.save();
-
-    res.json({ success: true, message: 'Member added', data: project });
+  res.json({
+    success: true,
+    message: 'Project and its tasks deleted',
+    deletedTasks: deletedCount,
+  });
 });
 
 
-// Remove member from project
+// Add member to project (inline ACL + idempotent)
+const addMember = asyncWrap(async (req, res) => {
+  const { memberId } = req.body;
+
+  const project = await Project.findById(req.params.id).select('members projectManager');
+  if (!project) throw new ExpressError(404, 'Project not found');
+
+  // Inline resource-level check (keep your style, no new middleware file)
+  ensureAdminOrThisPM(req.user, project);
+
+  const user = await User.findById(memberId);
+  if (!user) throw new ExpressError(404, 'User not found');
+
+  const updated = await Project.findByIdAndUpdate(
+    req.params.id,
+    { $addToSet: { members: memberId } }, // avoids duplicates
+    { new: true }
+  )
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
+
+  res.json({ success: true, message: 'Member added', data: updated });
+});
+
+// Remove member from project (inline ACL + idempotent)
 const removeMember = asyncWrap(async (req, res) => {
-    const { id, memberId } = req.params;
-    const project = await Project.findById(id);
-    if (!project) throw new ExpressError(404, 'Project not found');
+  const { id, memberId } = req.params;
 
-    if (!project.members.includes(memberId)) {
-        throw new ExpressError(400, 'User is not a member of this project');
-    }
+  const project = await Project.findById(id).select('members projectManager');
+  if (!project) throw new ExpressError(404, 'Project not found');
 
-    project.members = project.members.filter(
-        (member) => member.toString() !== memberId
-    );
-    await project.save();
+  // Inline resource-level check
+  ensureAdminOrThisPM(req.user, project);
 
-    res.json({ success: true, message: 'Member removed', data: project });
-})
+  const updated = await Project.findByIdAndUpdate(
+    id,
+    { $pull: { members: memberId } },
+    { new: true }
+  )
+    .populate('members', 'name email role')
+    .populate('createdBy', 'name email role')
+    .populate('projectManager', 'name email role');
 
+  if (!updated) throw new ExpressError(404, 'Project not found');
+  res.json({ success: true, message: 'Member removed', data: updated });
+});
 
 module.exports = {
-    createProject,
-    getProjects,
-    getProjectById,
-    updateProject,
-    deleteProject,
-    addMember,
-    removeMember,
+  createProject,
+  getProjects,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  addMember,
+  removeMember,
 };

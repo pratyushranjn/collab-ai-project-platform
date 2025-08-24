@@ -1,122 +1,212 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { useAuth } from "../context/AuthContext";
+import rehypeSanitize from "rehype-sanitize";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 
-function AIideas() {
-  const { user } = useAuth();
-  const [prompt, setPrompt] = useState("");
+export default function AIIdeas() {
+  const { user, loading } = useAuth();
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [thinking, setThinking] = useState(false);
   const [error, setError] = useState("");
-  const messagesEndRef = useRef(null);
 
   const socketRef = useRef(null);
+  const endRef = useRef(null);
+  const inputRef = useRef(null);
 
+  // Simple client ID generator
+  const genClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  // Connect socket and fetch history
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, { withCredentials: true });
+    if (!user?._id) return;
 
-    socketRef.current.emit("joinRoom", { userId: user._id });
+    const socket = io(SOCKET_URL, { withCredentials: true });
+    socketRef.current = socket;
 
-    socketRef.current.on("newMessage", (msg) => {
-      // Normalize sender: user vs AI
-      const normalizedMsg = {
-        ...msg,
-        sender: msg.sender === "AI" ? "AI" : "user",
-      };
-      setMessages((prev) => [...prev, normalizedMsg]);
-    });
-
-    return () => socketRef.current.disconnect();
-  }, [user._id]);
-
-  // Fetch previous messages
-  useEffect(() => {
-    const fetchMessages = async () => {
+    // Fetch chat history when connected
+    const fetchHistory = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/ai/ideas/user/${user._id}`,
-          { credentials: "include" }
-        );
+        setError("");
+        const res = await fetch(`${API_URL}/api/ai/ideas/user/${user._id}`, {
+          credentials: "include",
+        });
         const data = await res.json();
-        if (data.success) {
-          // Map DB messages to have sender: "user" or "AI"
-          const normalized = data.data.map((msg) => ({
-            ...msg,
-            sender: msg.sender === "AI" || !msg.createdBy ? "AI" : "user",
-          }));
-          setMessages(normalized);
-        }
-      } catch (err) {
-        console.error(err);
+        const messageList = (data?.data || []).map((m) => ({
+          ...m,
+          sender: m.sender === "AI" ? "AI" : "user",
+        }));
+        setMessages(messageList);
+        inputRef.current?.focus();
+      } catch {
         setError("Failed to fetch messages");
       }
     };
-    fetchMessages();
-  }, [user._id]);
 
-  const handleSend = () => {
-    if (!prompt.trim()) return;
-    setLoading(true);
-    setError("");
+    // Handle new messages from server
+    const handleNewMessage = (msg) => {
+      setMessages((prev) => {
+        
+        if (msg.clientId) {
+          const index = prev.findIndex((m) => m.clientId === msg.clientId);
+          if (index !== -1) {
+            const newMessages = [...prev];
+            newMessages[index] = { ...msg, clientId: undefined };
+            return newMessages;
+          }
+        }
+        // Adding new message
+        return [...prev, msg];
+      });
 
-    socketRef.current.emit("sendPrompt", { userId: user._id, text: prompt });
+      setThinking(false);
+      inputRef.current?.focus();
+    };
+
+    socket.on("connect", fetchHistory);
+    socket.on("newMessage", handleNewMessage);
+    socket.on("connect_error", (e) => setError(e?.message || "Socket error"));
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [SOCKET_URL, API_URL, user?._id]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  // Send message
+  const send = () => {
+    const text = prompt.trim();
+    if (!text || !socketRef.current || thinking) return;
+
+    setThinking(true);
+    const clientId = genClientId();
+
+    // Add user message immediately
+    setMessages((prev) => [
+      ...prev,
+      {
+        _id: `temp-${clientId}`,
+        clientId,
+        createdBy: user._id,
+        sender: "user",
+        text,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    // Get last 20 messages for context
+    const history = messages.slice(-20).map((m) => ({
+      role: m.sender === "user" ? "user" : "model",
+      text: m.text,
+    }));
+
+    // Send to server
+    socketRef.current.emit("sendPrompt", {
+      userId: user._id,
+      text,
+      clientId,
+      history,
+    });
 
     setPrompt("");
-    setLoading(false);
+    inputRef.current?.focus();
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const onKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !thinking) {
+      e.preventDefault();
+      send();
+    }
+  };
+
+  if (loading) return <div className="p-6 text-white">Loading…</div>;
+  if (!user) return null;
 
   return (
-    <div className="flex flex-col h-full p-6 bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold mb-4">🤖 AI Assistant</h1>
+    <div className="flex min-h-screen flex-col bg-[#000212] text-white">
 
-      <div className="flex-1 overflow-y-auto mb-4 space-y-3">
-        {messages.map((msg, idx) => {
-          const isUser = msg.sender === "user";
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-800 px-4 py-3">
+        <h1 className="text-lg sm:text-2xl font-semibold">🤖 AI Assistant</h1>
+        <div className="text-[11px] sm:text-xs text-gray-400">
+          {thinking ? "Thinking…" : `Messages: ${messages.length}`}
+        </div>
+      </header>
+
+      {/* Messages */}
+      <main className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3">
+        {messages.map((m) => {
+          const isUser = m.sender === "user";
+          const key = m._id || m.clientId || `${m.sender}-${Date.now()}`;
+
           return (
             <div
-              key={idx}
-              className={`max-w-xl p-3 rounded-lg shadow-md break-words ${isUser
-                  ? " text-white ml-auto text-right"
-                  : "bg-gray-700 text-white mr-auto text-left"
-                }`}
+              key={key}
+              className={`w-fit max-w-full sm:max-w-2xl rounded-2xl p-3 sm:p-4 shadow ${
+                isUser
+                  ? "ml-auto bg-blue-600/10 border border-blue-700/40"
+                  : "mr-auto bg-gray-800/60 border border-gray-700/50"
+              }`}
             >
-
-              <ReactMarkdown>{msg.text}</ReactMarkdown>
+              <div className={`mb-1 text-[10px] sm:text-xs ${
+                isUser ? "text-blue-300/80" : "text-gray-300/80"
+              }`}>
+                {isUser ? "You" : "AI"}
+              </div>
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                  {m.text || ""}
+                </ReactMarkdown>
+              </div>
+              <div className="mt-2 text-[10px] text-gray-400">
+                {new Date(m.createdAt || Date.now()).toLocaleString()}
+              </div>
             </div>
           );
         })}
-        <div ref={messagesEndRef} />
-      </div>
+        <div ref={endRef} />
+      </main>
 
-
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="✨ Ask me anything… spark a new idea 💡"
-          className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          onClick={handleSend}
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg"
-        >
-          {loading ? "Sending..." : "Send"}
-        </button>
-      </div>
-
-      {error && <p className="text-red-400 mt-2">{error}</p>}
+      {/* Input */}
+      <footer className="sticky bottom-0 border-t border-gray-800 bg-black/60 backdrop-blur px-3 sm:px-4 py-3">
+        <div className="mx-auto flex w-full max-w-4xl gap-2">
+          <textarea
+            ref={inputRef}
+            rows={1}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="✨ Spark a new idea 💡"
+            className="min-h-[44px] max-h-40 flex-1 resize-y rounded-xl border border-gray-700 bg-gray-900 p-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            disabled={thinking}
+          />
+          <button
+            onClick={send}
+            disabled={thinking || !prompt.trim()}
+            className={`shrink-0 rounded-xl px-4 py-2 transition ${
+              thinking || !prompt.trim()
+                ? "bg-gray-700 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600 active:scale-[0.98]"
+            }`}
+          >
+            {thinking ? "…" : "Send"}
+          </button>
+        </div>
+        {error && (
+          <p className="mx-auto mt-2 w-full max-w-4xl text-sm text-red-400">
+            {error}
+          </p>
+        )}
+      </footer>
     </div>
   );
 }
-
-export default AIideas;
-
-

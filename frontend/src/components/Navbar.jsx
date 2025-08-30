@@ -1,21 +1,25 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import AuthModal from "./AuthModal";
-import { useAuth } from "../context/AuthContext";
+import { useState, useEffect, useRef } from "react";
 import { LogOut, Bell, Plus, User } from "lucide-react";
 import toast from "react-hot-toast";
-import { useState, useEffect, useRef } from "react";
-import UpdateProfileModal from "../components/updateProfileModal";
-import QuickCreateModal from "../components/QuickCreateModal"; 
+
+import AuthModal from "./AuthModal";
+import UpdateProfileModal from "./updateProfileModal";
+import QuickCreateModal from "./QuickCreateModal";
+
+import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationsContext";
 
 export default function Navbar() {
   const { user, logout, showLoginModal, closeLoginModal, modalOpen } = useAuth();
+  const { items: notifications, unread, markAllRead } = useNotifications();
+
   const navigate = useNavigate();
   const location = useLocation();
 
-
   // Modals
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false); 
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false);
 
   // Dropdown states
   const [showNotifications, setShowNotifications] = useState(false);
@@ -37,9 +41,15 @@ export default function Navbar() {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (quickCreateRef.current && !quickCreateRef.current.contains(e.target)) setShowQuickCreate(false);
-      if (notificationsRef.current && !notificationsRef.current.contains(e.target)) setShowNotifications(false);
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+      if (quickCreateRef.current && !quickCreateRef.current.contains(e.target))
+        setShowQuickCreate(false);
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(e.target)
+      )
+        setShowNotifications(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target))
+        setShowUserMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -70,31 +80,28 @@ export default function Navbar() {
     if (type === "project" && project?._id) {
       navigate(`/projects/${project._id}`);
     }
-    // For task you can toast or refresh lists in the page that owns tasks
-    if (type === "task") toast.success("Task created");
   };
 
-  // If you have a current project id from context/route, pass it here
-  const defaultProjectId = ""; // e.g., from params/context
-
+  const defaultProjectId = "";
 
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-black text-white shadow-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {/* On mobile push actions right; on md+ space-between */}
           <div className="flex items-center h-16 justify-end md:justify-between">
-            {/* Left - Logo (hidden on mobile, takes no space) */}
+            {/* Logo */}
             <Link to="/" className="hidden md:flex items-center space-x-2">
-              <img src="/humanoid-robot_18220260.png" alt="Logo" className="h-9" />
+              <img
+                src="/humanoid-robot_18220260.png"
+                alt="Logo"
+                className="h-9"
+              />
               <span className="text-lg font-semibold">CollabHub</span>
             </Link>
 
-            {/* Right - Actions */}
             <div className="flex items-center space-x-3 sm:space-x-4">
               {user ? (
                 <>
-                  {/* Ask AI (md+ only) */}
                   <Link
                     to="/ai"
                     className="hidden md:block px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 transition text-sm font-medium"
@@ -107,7 +114,7 @@ export default function Navbar() {
                     <button
                       aria-haspopup="menu"
                       aria-expanded={showQuickCreate}
-                      className="p-2 rounded-full bg-green-600 hover:bg-green-700 transition"
+                      className="p-2 rounded-full bg-green-600 hover:bg-green-700 transition cursor-pointer"
                       onClick={() => toggleMenu("quick")}
                     >
                       <Plus size={20} />
@@ -118,10 +125,10 @@ export default function Navbar() {
                         className="absolute right-0 mt-2 w-44 bg-black text-white rounded-lg border border-gray-800 shadow-lg p-2 z-50"
                       >
                         <button
-                          className="block w-full text-left px-3 py-2 hover:bg-gray-800 rounded"
+                          className="block w-full text-left px-3 py-2 hover:bg-gray-800 rounded cursor-pointer"
                           onClick={() => {
                             setShowQuickCreate(false);
-                            setShowQuickCreateModal(true); // open modal default on Task tab
+                            setShowQuickCreateModal(true);
                           }}
                         >
                           New Task
@@ -130,7 +137,7 @@ export default function Navbar() {
                           className="block w-full text-left px-3 py-2 hover:bg-gray-800 rounded"
                           onClick={() => {
                             setShowQuickCreate(false);
-                            setShowQuickCreateModal(true); // user can switch to Project tab in modal
+                            setShowQuickCreateModal(true);
                           }}
                         >
                           New Project
@@ -148,29 +155,116 @@ export default function Navbar() {
                       aria-haspopup="menu"
                       aria-expanded={showNotifications}
                       className="relative p-2 rounded-full hover:bg-gray-800 transition"
-                      onClick={() => toggleMenu("notif")}
+                      onClick={() => {
+                        toggleMenu("notif");
+                        if (!showNotifications) markAllRead();
+                      }}
                     >
                       <Bell size={20} />
-                      <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                      {unread > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 text-xs flex items-center justify-center bg-red-500 rounded-full">
+                          {unread > 9 ? "9+" : unread}
+                        </span>
+                      )}
                     </button>
+
                     {showNotifications && (
                       <div
                         role="menu"
-                        className="absolute right-0 mt-2 w-64 bg-black text-white rounded-lg border border-gray-800 shadow-lg p-3 z-50"
+                        className="absolute right-0 mt-2 w-80 max-h-[60vh] overflow-auto bg-black text-white rounded-lg border border-gray-800 shadow-lg p-3 z-50"
                       >
-                        <p className="text-sm text-gray-400 border-b border-gray-800 pb-2">
-                          🔔 Notifications
-                        </p>
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                          <p className="text-sm text-gray-400">🔔 Notifications</p>
+                          {unread > 0 ? (
+                            <span className="text-xs text-red-400">{unread} new</span>
+                          ) : (
+                            <span className="text-xs text-gray-500">
+                              All caught up
+                            </span>
+                          )}
+                        </div>
+
                         <div className="mt-2 space-y-2">
-                          <div className="p-2 rounded hover:bg-gray-800 cursor-pointer">Task assigned to you</div>
-                          <div className="p-2 rounded hover:bg-gray-800 cursor-pointer">New message in Chat</div>
-                          <div className="p-2 rounded hover:bg-gray-800 cursor-pointer">Project updated</div>
+                          {notifications.length === 0 && (
+                            <div className="text-sm text-gray-500 py-6 text-center">
+                              No notifications yet
+                            </div>
+                          )}
+
+                          {notifications.map((n) => {
+                            if (n.type === "task.assigned") {
+                              return (
+                                <button
+                                  key={n._cid}
+                                  onClick={() =>
+                                    navigate(
+                                      `/projects/${n.data.projectId}?task=${n.data.taskId}`
+                                    )
+                                  }
+                                  className={`w-full text-left p-2 rounded hover:bg-gray-800 ${
+                                    !n.read ? "bg-gray-900/50" : ""
+                                  }`}
+                                >
+                                  <div className="text-sm">
+                                    <span className="font-medium">
+                                      Task assigned:
+                                    </span>{" "}
+                                    {n.data.title}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    Project: {n.data.projectName} •{" "}
+                                    {new Date(n.createdAt).toLocaleString()}
+                                  </div>
+                                </button>
+                              );
+                            }
+
+                            if (n.type === "chat.message") {
+                              return (
+                                <button
+                                  key={n._cid}
+                                  onClick={() =>
+                                    navigate(
+                                      `/projects/${n.data.projectId}/chat?mid=${n.data.messageId}`
+                                    )
+                                  }
+                                  className={`w-full text-left p-2 rounded hover:bg-gray-800 ${
+                                    !n.read ? "bg-gray-900/50" : ""
+                                  }`}
+                                >
+                                  <div className="text-sm">
+                                    <span className="font-medium">
+                                      {n.data.sender?.name || "Someone"}
+                                    </span>{" "}
+                                    sent a message
+                                  </div>
+                                  <div className="text-xs text-gray-400 line-clamp-1">
+                                    {n.data.text}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {n.data.projectName} •{" "}
+                                    {new Date(n.createdAt).toLocaleString()}
+                                  </div>
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={n._cid}
+                                className="p-2 rounded bg-gray-900/40 text-sm text-gray-300"
+                              >
+                                New activity •{" "}
+                                {new Date(n.createdAt).toLocaleString()}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* User menu */}
+                  {/* User Menu */}
                   <div className="relative" ref={userMenuRef}>
                     <button
                       aria-haspopup="menu"
@@ -214,16 +308,12 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Auth Modal */}
+      {/* Modals */}
       <AuthModal isOpen={modalOpen} onClose={closeLoginModal} />
-
-      {/* Profile Modal */}
       <UpdateProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
       />
-
-      {/* Quick Create Modal (Task/Project) */}
       <QuickCreateModal
         isOpen={showQuickCreateModal}
         onClose={() => setShowQuickCreateModal(false)}

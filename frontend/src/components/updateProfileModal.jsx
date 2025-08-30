@@ -25,22 +25,14 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
-
     try {
-      const res = await api.put(`/users/${user._id}`, formData);
+      const res = await api.put(`/users/${user._id}`, formData); 
 
-      // Accept common response shapes:
-      // { data: { ...user } } OR { data: { data: { ...user } } } OR { user: { ...user } }
-      const updatedUser =
-        res?.data?.data ??
-        res?.data?.user ??
-        res?.data;
-
+      // Accept common response shapes
+      const updatedUser = res?.data?.data ?? res?.data?.user ?? res?.data;
       if (!updatedUser || typeof updatedUser !== "object") {
-        // If backend returns something unexpected, still stop here
         throw new Error("Unexpected server response.");
       }
-
       setUser(updatedUser);
       toast.success("Profile updated successfully!");
       onClose?.();
@@ -59,62 +51,79 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-sm z-50 animate-fadeIn">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-slate-100 p-7 rounded-2xl w-[95%] max-w-md shadow-2xl animate-slideUp">
-        <div className="flex justify-between items-center mb-5">
-          <h2 className="text-lg md:text-xl font-semibold">Update Profile</h2>
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+    
+      <div
+        className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-md border border-gray-800"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="update-profile-title"
+      >
+
+        <div className="flex items-center justify-between p-5 border-b border-gray-800">
+          <h2 id="update-profile-title" className="text-lg font-semibold text-white">
+            Update Profile
+          </h2>
           <button
-            onClick={onClose}
-            className="text-slate-300 text-2xl hover:text-red-500 transition-colors"
             type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors focus:outline-none"
+            aria-label="Close"
           >
-            &times;
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1">
-              Name
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full bg-slate-900 text-slate-100 border border-slate-700 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-400/30 outline-none transition"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full bg-slate-900 text-slate-100 border border-slate-700 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-400/30 outline-none transition"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
-          <div className="flex justify-end gap-3 mt-5">
+          <div className="flex gap-2 pt-2 justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-md border border-slate-600 text-slate-200 hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
             >
-              {loading ? "Saving..." : "Save"}
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 border-2 border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                "Save"
+              )}
             </button>
           </div>
         </form>

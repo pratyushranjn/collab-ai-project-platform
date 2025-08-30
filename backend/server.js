@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db/db');
 const http = require('http');
-const setupSocket = require('./sockets/Socket');
+const setupSocket = require('./sockets/index');
 const cookieParser = require('cookie-parser');
 
 const authRoute = require('./routes/AuthRoutes');
@@ -11,6 +11,9 @@ const projectRoutes = require('./routes/ProjectRoutes');
 const taskRoutes = require("./routes/taskRoutes");
 const userRoutes = require("./routes/userRoutes");
 const aiRoutes = require('./routes/aiRoutes')
+const chatRoutes = require('./routes/chatRoutes')
+const dashboardRoutes = require('./routes/Admin/dashboardRoutes');
+const panelRoutes = require('./routes/Admin/panelRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -45,13 +48,17 @@ app.use('/api/tasks', taskRoutes)
 
 // AI Routes
 app.use("/api/ai", aiRoutes);
+app.use("/api/chat", chatRoutes);
 
-
+// Admin Route
+app.use('/api/admin', dashboardRoutes);
+app.use('/api/admin', panelRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('API is working');
+  res.json({ message: 'Server is healthy' });
 });
+
 
 // Setup Socket.IO
 const io = setupSocket(server, allowedOrigins);
@@ -63,11 +70,10 @@ app.set("io", io);
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Something went wrong';
-  res.status(statusCode).json({ success: false, message }); 
+  res.status(statusCode).json({ success: false, message });
 });
 
 
-// Start Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

@@ -92,7 +92,7 @@ export default function QuickCreateModal({
         assignedTo: assignee ? [assignee] : [],
       };
 
-      // IMPORTANT: Your backend routes live in taskRoutes,
+      // IMPORTANT: backend routes live in taskRoutes,
       // so the real path is /api/tasks/projects/:projectId/tasks
       const { data } = await api.post(
         `/tasks/projects/${task.projectId}/tasks`,
@@ -274,7 +274,7 @@ export default function QuickCreateModal({
               <option value="high">High</option>
             </select>
 
-            {/* Project Manager (ADMIN ONLY) */}
+
             {isAdmin && (
               <select
                 value={projectManagerId}

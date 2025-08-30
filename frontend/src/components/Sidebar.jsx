@@ -10,7 +10,15 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  
+  const isActive = (path) => {
+    if (path === "/chat") {
+      // active on /chat or /projects/:id/chat
+      return location.pathname === "/chat" || /\/projects\/[^/]+\/chat$/.test(location.pathname);
+    }
+    return location.pathname === path;
+  };
+
 
   const handleProtectedNav = (path) => {
     if (user) {
@@ -39,7 +47,7 @@ export default function Sidebar() {
   ];
 
   if (user?.role === "admin") {
-    links.push({ path: "/admin", label: "Admin Panel", admin: true });
+    links.push({ path: "/panel", label: "Admin Panel", admin: true });
   }
 
   return (
@@ -73,7 +81,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* <div className="absolute bottom-6 left-0 w-full px-4">
+        <div className="absolute bottom-6 left-0 w-full px-4">
           {user ? (
             <div className="flex items-center justify-between bg-gray-800 px-3 py-2 rounded">
               <div className="flex items-center space-x-2 cursor-pointer">
@@ -94,8 +102,7 @@ export default function Sidebar() {
             <p className="text-gray-400 text-sm">Not logged in</p>
           )}
         </div>
-         */}
-
+      
       </div>
     </aside>
   );

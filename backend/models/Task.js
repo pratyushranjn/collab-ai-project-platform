@@ -36,4 +36,10 @@ const TaskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+TaskSchema.index({ project: 1, status: 1 });
+
+TaskSchema.virtual('assigneeCount').get(function () {
+  return Array.isArray(this.assignedTo) ? this.assignedTo.length : 0;
+});
+
 module.exports = mongoose.model("Task", TaskSchema);

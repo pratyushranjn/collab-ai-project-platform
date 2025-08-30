@@ -4,7 +4,7 @@ import { LogOut, Bell, Plus, User } from "lucide-react";
 import toast from "react-hot-toast";
 
 import AuthModal from "./AuthModal";
-import UpdateProfileModal from "./updateProfileModal";
+import UpdateProfileModal from "./UpdateProfileModal";
 import QuickCreateModal from "./QuickCreateModal";
 
 import { useAuth } from "../context/AuthContext";

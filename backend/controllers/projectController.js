@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Project = require('../models/Project');
-const Task = require('../models/Task'); 
+const Task = require('../models/Task');
 const User = require('../models/user');
 const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
@@ -49,17 +49,32 @@ const createProject = asyncWrap(async (req, res) => {
 
 // Get all projects (hide unrelated projects for non-admins)
 const getProjects = asyncWrap(async (req, res) => {
-  const query = req.user.role === 'admin'
-    ? {}
-    : { $or: [{ members: req.user.id }, { createdBy: req.user.id }, { projectManager: req.user.id }] };
+  if (req.user.role === 'admin') {
+    const projects = await Project.find({})
+      .populate('members', 'name email role')
+      .populate('createdBy', 'name email role')
+      .populate('projectManager', 'name email role');
+    return res.json({ success: true, data: projects });
+  }
 
-  const projects = await Project.find(query)
+  // Projects where the user has any assigned task
+  const taskProjectIds = await Task.distinct('project', { assignedTo: req.user.id });
+
+  const projects = await Project.find({
+    $or: [
+      { _id: { $in: taskProjectIds } },           // assignee visibility
+      { members: req.user.id },
+      { createdBy: req.user.id },
+      { projectManager: req.user.id },
+    ],
+  })
     .populate('members', 'name email role')
     .populate('createdBy', 'name email role')
     .populate('projectManager', 'name email role');
 
   res.json({ success: true, data: projects });
 });
+
 
 // Get single project by id
 const getProjectById = asyncWrap(async (req, res) => {

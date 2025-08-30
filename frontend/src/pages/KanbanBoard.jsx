@@ -130,7 +130,6 @@ export default function KanbanBoard() {
       await api.put(`/tasks/${movedTask.id}`, { status: to });
     } catch (e) {
       console.error("Status update failed", e.response?.data || e.message);
-      // (Optional) revert UI on failure
     }
   }, []);
 

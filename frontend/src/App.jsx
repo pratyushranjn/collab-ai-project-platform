@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+ import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import { useState } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
+import { NotificationsProvider } from "./context/NotificationsContext";
 
 import LandingPage from "./pages/LandingPage";
 import Projects from "./components/Projects";
@@ -14,11 +15,12 @@ import KanbanBoardPage from "./pages/KanbanBoard";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./layouts/AppLayout";
-import ChatUI from "./pages/ChatUI";
+import ChatUI from "./pages/ChatUi";
 import TaskComponent from "./pages/Tasks";
 import ProjectDetails from "./components/ProjectDetails";
 import UpdateProfileModal from "./components/updateProfileModal";
 import Page404 from "./pages/page404";
+import ProjectChat from "./pages/ProjectChat";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,33 +30,39 @@ function App() {
   return (
     <AuthProvider>
       <SocketProvider>
+        <NotificationsProvider >
         <Router>
           <Routes>
-            {/* Public Page*/}
+            {/* Public */}
             <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
 
             {/* Protected (inside app layout) */}
             <Route element={<Layout />}>
               <Route path="/task" element={<ProtectedRoute><TaskComponent /></ProtectedRoute>} />
               <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-        
-              <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
-              <Route path="/projects/:projectId/chat" element={<ProtectedRoute><ChatUI /></ProtectedRoute>} />
 
+              {/* NESTED project routes (single definition) */}
+              <Route path="/projects/:projectId" element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
+                <Route index element={<ProjectDetails />} />
+                <Route path="chat" element={<ProjectChat />} />
+              </Route>
+
+              {/* Other app routes */}
+              <Route path="/chat" element={<ProtectedRoute><ChatUI /></ProtectedRoute>} />
               <Route path="/ai" element={<ProtectedRoute><AIIdeas /></ProtectedRoute>} />
               <Route path="/mindmap" element={<ProtectedRoute><MindMap /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute ><Dashboard /></ProtectedRoute>} />
+              <Route path="/panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
               <Route path="/board" element={<ProtectedRoute><KanbanBoardPage /></ProtectedRoute>} />
-
-              <Route path="/chat" element={<ProtectedRoute><Navigate to="/projects" replace /></ProtectedRoute>} />
             </Route>
 
-            {/* 404 Page*/}
-            <Route path="*" element={< Page404 />  }/> </Routes>
-          
+            {/* 404 */}
+            <Route path="*" element={<Page404 />} />
+          </Routes>
+
           <UpdateProfileModal isOpen={isModalOpen} onClose={closeModal} />
         </Router>
+        </NotificationsProvider>
       </SocketProvider>
     </AuthProvider>
   );

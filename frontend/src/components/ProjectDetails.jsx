@@ -123,8 +123,8 @@ export default function ProjectDetails() {
     const arr = Array.isArray(assignedTo)
       ? assignedTo
       : assignedTo
-      ? [assignedTo]
-      : [];
+        ? [assignedTo]
+        : [];
 
     if (arr.length === 0) return "—";
 
@@ -147,26 +147,27 @@ export default function ProjectDetails() {
 
         {project?._id && (
 
-   
           <div className="flex gap-2">
+            <button
 
-       <Link
-      to={`/projects/${project._id}/chat`}
-      className="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600"
-    >
-      Open Chat
-    </Link>
+              onClick={() => navigate(`/projects/${project._id}/chat`, {
+                state: { projectName: project.name }
+              })}
+              className="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600 cursor-pointer"
+            >
+              Open Chat
+            </button>
 
             <button
               onClick={() => navigate(`/board?projectId=${project._id}`)}
-              className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700"
+              className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
             >
               Open Board
             </button>
             {isAdmin && (
               <button
                 onClick={deleteProject}
-                className="px-3 py-1.5 rounded bg-red-600 text-white hover:bg-red-700"
+                className="px-3 py-1.5 rounded bg-red-600 text-white hover:bg-red-700 cursor-pointer"
               >
                 Delete Project
               </button>

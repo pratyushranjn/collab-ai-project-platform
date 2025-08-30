@@ -37,6 +37,9 @@ The project is organized into two main parts:
 ### ✅ Tasks
 ![Tasks](frontend/public/Tasks.png)
 
+### 📊 Dashboard
+![Dashboard](frontend/public/Dashboard.png)
+
 ---
 
 ## 🚧 Work in Progress

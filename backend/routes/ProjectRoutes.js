@@ -9,6 +9,7 @@ const {
   removeMember,
 } = require('../controllers/projectController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { ensureProjectAccess } = require('../middleware/projectAccess'); 
 
 const router = express.Router();
 
@@ -17,9 +18,9 @@ router.post('/', protect, authorize('admin'), createProject);
 router.put('/:id', protect, authorize('admin'), updateProject);
 router.delete('/:id', protect, authorize('admin'), deleteProject);
 
-// Accessible to any authenticated user
+// Authenticated users (details locked to members/PM/admin)
 router.get('/', protect, getProjects);
-router.get('/:id', protect, getProjectById);
+router.get('/:id', protect, ensureProjectAccess, getProjectById);
 
 // Admin + Project Manager can manage members
 router.post('/:id/members', protect, authorize('admin', 'project-manager'), addMember);

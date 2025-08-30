@@ -2,11 +2,12 @@ const Task = require('../models/Task');
 const Project = require('../models/Project');
 const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
+const { notifyUser } = require('../sockets/notify');
 
 // Create New Task
 const createTask = asyncWrap(async (req, res) => {
     const { projectId } = req.params;
-    const { title, description, assignedTo, priority } = req.body; 
+    const { title, description, assignedTo, priority } = req.body;
 
     const project = await Project.findById(projectId);
     if (!project) throw new ExpressError(404, 'Project not found');
@@ -17,8 +18,24 @@ const createTask = asyncWrap(async (req, res) => {
         project: projectId,
         assignedTo,
         createdBy: req.user.id,
-        priority: priority || 'medium', 
+        priority: priority || 'medium',
     });
+
+    // emit a notification to the assigned user
+    const io = req.app.get('io');
+    if (io && assignedTo) {
+        notifyUser(io, String(assignedTo), {
+            type: 'task.assigned',
+            createdAt: new Date().toISOString(),
+            data: {
+                taskId: String(task._id),
+                title: task.title,
+                projectId: String(projectId),
+                projectName: project.name,
+                assignedBy: { _id: req.user.id }, 
+            },
+        });
+    }
 
     res.status(201).json({ success: true, data: task });
 });
@@ -65,13 +82,7 @@ const getTasks = asyncWrap(async (req, res) => {
 const updateTask = asyncWrap(async (req, res) => {
     const updates = req.body;
     console.log(updates);
-
-    // Update task (including priority if provided)
-    const task = await Task.findByIdAndUpdate(req.params.id, updates, {
-        new: true,
-        runValidators: true,
-    });
-
+    const task = await Task.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     if (!task) throw new ExpressError(404, 'Task not found');
 
     res.json({ success: true, data: task });

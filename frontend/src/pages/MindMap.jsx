@@ -1,53 +1,73 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Stage, Layer, Circle, Rect, Text, Line } from "react-konva";
-import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 
-export default function MindMap({ roomId }) {
+export default function MindMap() {
+  const { user } = useAuth();
+  const socket = useSocket();
+
+  // user gets their own roomId (their userId)
+  const roomId = user?._id;
+
   const stageRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Smaller default + we'll clamp height responsively
   const [stageSize, setStageSize] = useState({ width: 640, height: 360 });
   const [nodes, setNodes] = useState([]);
   const [lines, setLines] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [drawing, setDrawing] = useState(false);
+  const [history, setHistory] = useState([]);
 
-  const socketRef = useRef(null);
-
-  // Socket setup 
+  // Debug
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, { withCredentials: true });
-    socketRef.current.emit("joinMindMap", { roomId });
-
-    socketRef.current.on("updateNodes", (serverNodes) => setNodes(serverNodes));
-    socketRef.current.on("updateLines", (serverLines) => setLines(serverLines));
-    socketRef.current.on("addShape", (data) => setNodes((prev) => [...prev, data.shape]));
-    socketRef.current.on("drawing", (data) =>
-      setLines((prev) => [...prev, data.line])
-    );
-    socketRef.current.on("moveNode", (data) =>
-      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
-    );
-    socketRef.current.on("editNodeText", (data) =>
-      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
-    );
-
-    return () => socketRef.current?.disconnect();
+  //  console.log(" MindMap using per-user roomId:", roomId);
   }, [roomId]);
 
-  // Responsive Stage: fit to container, but don't get too tall 
+  // 🔹 Setup socket listeners
+  useEffect(() => {
+    if (!socket || !roomId) return;
+
+    socket.emit("joinMindMap", { roomId });
+
+    socket.on("updateNodes", (serverNodes) => setNodes(serverNodes));
+    socket.on("updateLines", (serverLines) => setLines(serverLines));
+    socket.on("addShape", (shape) => setNodes((prev) => [...prev, shape]));
+    socket.on("drawing", (data) => setLines((prev) => [...prev, data.line]));
+    socket.on("moveNode", (data) =>
+      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
+    );
+    socket.on("editNodeText", (data) =>
+      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
+    );
+    socket.on("clearBoard", () => {
+      setNodes([]);
+      setLines([]);
+      setHistory([]);
+    });
+
+    // cleanup
+    return () => {
+      socket.off("updateNodes");
+      socket.off("updateLines");
+      socket.off("addShape");
+      socket.off("drawing");
+      socket.off("moveNode");
+      socket.off("editNodeText");
+      socket.off("clearBoard");
+    };
+  }, [socket, roomId]);
+
+  // Responsive board sizing
   useEffect(() => {
     if (!containerRef.current) return;
 
     const updateSize = (width) => {
-      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-
       const targetWidth = Math.round(width);
       const idealH = Math.round((targetWidth * 9) / 16);
 
-      // clamp height between a small mobile minimum and 60% of viewport height
       const minH = 220;
       const maxH = Math.floor(vh * 0.6);
       const height = Math.max(minH, Math.min(idealH, maxH));
@@ -62,13 +82,12 @@ export default function MindMap({ roomId }) {
     });
 
     ro.observe(containerRef.current);
-    // Initial run (in case observer fires late)
     updateSize(containerRef.current.getBoundingClientRect().width);
 
     return () => ro.disconnect();
   }, []);
 
-  // ---------------- Node / Sticky Note ----------------
+  //  Handlers 
   const handleStageBlankClick = (e) => {
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage().getPointerPosition();
@@ -82,15 +101,19 @@ export default function MindMap({ roomId }) {
     };
 
     setNodes((prev) => [...prev, newNode]);
-    socketRef.current?.emit("addShape", { roomId, shape: newNode });
+    setHistory((prev) => [...prev, { type: "node", id: newNode.id }]);
+
+    socket?.emit("addShape", { roomId, userId: user._id, shape: newNode });
   };
 
   const handleNodeClick = (node) => {
     if (selectedNode && selectedNode.id !== node.id) {
-      const newLine = { points: [selectedNode.x, selectedNode.y, node.x, node.y] };
+      const newLine = { from: selectedNode.id, to: node.id };
       setLines((prev) => [...prev, newLine]);
+      setHistory((prev) => [...prev, { type: "line", from: selectedNode.id, to: node.id }]);
       setSelectedNode(null);
-      socketRef.current?.emit("drawing", { roomId, line: newLine });
+
+      socket?.emit("drawing", { roomId, userId: user._id, line: newLine });
     } else {
       setSelectedNode(node);
     }
@@ -99,7 +122,8 @@ export default function MindMap({ roomId }) {
   const handleDragEnd = (node, e) => {
     const updatedNode = { ...node, x: e.target.x(), y: e.target.y() };
     setNodes((prev) => prev.map((n) => (n.id === node.id ? updatedNode : n)));
-    socketRef.current?.emit("moveNode", { roomId, node: updatedNode });
+
+    socket?.emit("moveNode", { roomId, userId: user._id, node: updatedNode });
   };
 
   const handleDoubleClick = (node) => {
@@ -107,13 +131,14 @@ export default function MindMap({ roomId }) {
     if (!newText) return;
     const updatedNode = { ...node, text: newText };
     setNodes((prev) => prev.map((n) => (n.id === node.id ? updatedNode : n)));
-    socketRef.current?.emit("editNodeText", { roomId, node: updatedNode });
+
+    socket?.emit("editNodeText", { roomId, userId: user._id, node: updatedNode });
   };
 
-  // Freehand Drawing 
   const startLine = (stage) => {
     const pos = stage.getPointerPosition();
     const newLine = {
+      freehand: true,
       points: [pos.x, pos.y],
       stroke: "black",
       strokeWidth: 2,
@@ -122,6 +147,7 @@ export default function MindMap({ roomId }) {
       lineJoin: "round",
     };
     setLines((prev) => [...prev, newLine]);
+    setHistory((prev) => [...prev, { type: "line" }]);
     setDrawing(true);
   };
 
@@ -131,16 +157,37 @@ export default function MindMap({ roomId }) {
     setLines((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1];
+      if (!last.freehand) return prev;
       const updatedLast = { ...last, points: [...last.points, pos.x, pos.y] };
-      const updated = [...prev.slice(0, -1), updatedLast];
-      socketRef.current?.emit("drawing", { roomId, line: updatedLast });
-      return updated;
+      return [...prev.slice(0, -1), updatedLast];
     });
   };
 
   const endLine = () => setDrawing(false);
 
-  // Mouse + Touch handlers
+  const handleUndo = () => {
+    setHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+
+      if (last.type === "node") {
+        setNodes((prevNodes) => prevNodes.filter((n) => n.id !== last.id));
+        setLines((prevLines) => prevLines.filter((l) => l.from !== last.id && l.to !== last.id));
+      } else if (last.type === "line") {
+        setLines((prevLines) => prevLines.slice(0, -1));
+      }
+
+      return prev.slice(0, -1);
+    });
+  };
+
+  const handleClear = () => {
+    setNodes([]);
+    setLines([]);
+    setHistory([]);
+    socket?.emit("clearBoard", { roomId, userId: user._id });
+  };
+
   const onStageMouseDown = (e) => {
     if (e.target === e.target.getStage()) startLine(e.target.getStage());
   };
@@ -160,14 +207,14 @@ export default function MindMap({ roomId }) {
   return (
     <div className="flex flex-col items-center p-4 sm:p-5 space-y-4 sm:space-y-5">
       <h1 className="text-2xl sm:text-3xl font-bold text-center">
-        Mind Map & Whiteboard 🧠
+        My Personal Whiteboard 🧠
       </h1>
 
-      <p className="max-w-2xl text-center text-sm sm:text-base" style={{ color: "#BCBCBC" }}>
-        Create and visualize your ideas collaboratively in real time.
-      </p>
+      <div className="flex gap-4 text-2xl cursor-pointer select-none">
+        <span onClick={handleUndo} title="Undo Last" className="hover:scale-110 transition-transform">🩹</span>
+        <span onClick={handleClear} title="Clear All" className="hover:scale-110 transition-transform">🧹</span>
+      </div>
 
-      {/* Narrower board on small screens; grows by breakpoint */}
       <div
         ref={containerRef}
         className="w-full max-w-4xl md:max-w-5xl lg:max-w-6xl rounded-xl shadow bg-white overflow-hidden"
@@ -186,18 +233,31 @@ export default function MindMap({ roomId }) {
           className="bg-gray-100"
         >
           <Layer>
-            {lines.map((line, i) => (
-              <Line
-                key={i}
-                points={line.points}
-                stroke={line.stroke || "black"}
-                strokeWidth={line.strokeWidth ?? 2}
-                tension={line.tension ?? 0.5}
-                lineCap={line.lineCap ?? "round"}
-                lineJoin={line.lineJoin ?? "round"}
-              />
-            ))}
+            {/* Lines */}
+            {lines.map((line, i) =>
+              line.freehand ? (
+                <Line key={i} {...line} />
+              ) : (
+                (() => {
+                  const fromNode = nodes.find((n) => n.id === line.from);
+                  const toNode = nodes.find((n) => n.id === line.to);
+                  if (!fromNode || !toNode) return null;
+                  return (
+                    <Line
+                      key={i}
+                      points={[fromNode.x, fromNode.y, toNode.x, toNode.y]}
+                      stroke="black"
+                      strokeWidth={2}
+                      tension={0.5}
+                      lineCap="round"
+                      lineJoin="round"
+                    />
+                  );
+                })()
+              )
+            )}
 
+            {/* Nodes */}
             {nodes.map((node) =>
               node.type === "circle" ? (
                 <React.Fragment key={node.id}>
@@ -243,9 +303,9 @@ export default function MindMap({ roomId }) {
         </Stage>
       </div>
 
-      <p className="text-xs sm:text-sm text-center max-w-3xl px-3" style={{ color: "#BCBCBC" }}>
-        Click empty canvas to add nodes. Click two nodes to connect them. Drag to move. Double-click
-        to edit text. Hold and drag to draw freehand (touch supported).
+      <p className="text-xs sm:text-sm text-center max-w-3xl px-3 text-gray-400">
+        This whiteboard is private to you. Click canvas to add nodes. Click two nodes to connect them. 
+        Drag to move. Double-click to edit text. Hold and drag to draw freehand (touch supported).
       </p>
     </div>
   );

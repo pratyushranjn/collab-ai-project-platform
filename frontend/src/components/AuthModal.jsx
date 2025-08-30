@@ -20,7 +20,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
   const modalRef = useRef();
   const navigate = useNavigate();
-  const { login, register, user } = useAuth(); // user added
+  const { login, register, user } = useAuth();
 
   // Animation mount/unmount
   useEffect(() => {
@@ -87,23 +87,21 @@ export default function AuthModal({ isOpen, onClose }) {
 
   const handleClose = () => {
     onClose();
-    if (!user) navigate("/"); // redirect to landing if not logged in
+    if (!user) navigate("/");
   };
 
   if (!isVisible) return null;
 
   return (
     <div
-      className={`fixed inset-0 flex justify-center items-center z-50 p-4 backdrop-blur-sm ${
-        isOpen ? "fadeIn" : "fadeOut"
-      }`}
+      className={`fixed inset-0 flex justify-center items-center z-50 p-4 backdrop-blur-sm ${isOpen ? "fadeIn" : "fadeOut"
+        }`}
       style={{ background: "rgba(17,24,39,0.85)" }}
     >
       <div
         ref={modalRef}
-        className={`bg-gray-900 border border-cyan-700 rounded-xl shadow-lg w-full max-w-sm p-6 relative overflow-hidden transform ${
-          isOpen ? "modalEnter" : "modalExit"
-        }`}
+        className={`bg-gray-900 border border-cyan-700 rounded-xl shadow-lg w-full max-w-sm p-6 relative overflow-hidden transform ${isOpen ? "modalEnter" : "modalExit"
+          }`}
         style={{
           boxShadow: "0 0 30px rgba(6, 182, 212, 0.6)",
           fontFamily: "'Poppins', sans-serif",
@@ -120,17 +118,15 @@ export default function AuthModal({ isOpen, onClose }) {
           <div className="flex relative border-b border-gray-700">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-center font-medium transition-colors ${
-                isLogin ? "text-cyan-400" : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 py-2 text-center font-medium transition-colors ${isLogin ? "text-cyan-400" : "text-gray-400 hover:text-white"
+                }`}
             >
               Login
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-center font-medium transition-colors ${
-                !isLogin ? "text-cyan-400" : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 py-2 text-center font-medium transition-colors ${!isLogin ? "text-cyan-400" : "text-gray-400 hover:text-white"
+                }`}
             >
               Signup
             </button>
@@ -227,17 +223,16 @@ export default function AuthModal({ isOpen, onClose }) {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full mt-2 py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 transition-all ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`w-full mt-2 py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {loading
               ? isLogin
                 ? "SIGNING IN..."
                 : "CREATING..."
               : isLogin
-              ? "SIGN IN"
-              : "CREATE ACCOUNT"}
+                ? "SIGN IN"
+                : "CREATE ACCOUNT"}
           </button>
         </form>
       </div>

@@ -22,8 +22,9 @@ const server = http.createServer(app);
 connectDB();
 
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174"
+  "http://localhost:5173",          
+  "http://localhost:5174",          
+  "https://collabhub-frontend.onrender.com", 
 ];
 
 // Middlewares

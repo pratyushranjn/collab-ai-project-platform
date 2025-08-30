@@ -7,8 +7,10 @@ import { useAuth } from "../context/AuthContext";
 export default function AIIdeas() {
   const { user, loading } = useAuth();
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_BASE_URL 
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
+
+  console.log(API_URL, "---", SOCKET_URL);
 
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
@@ -33,7 +35,7 @@ export default function AIIdeas() {
     const fetchHistory = async () => {
       try {
         setError("");
-        const res = await fetch(`${API_URL}/api/ai/ideas/user/${user._id}`, {
+        const res = await fetch(`${API_URL}/ai/ideas/user/${user._id}`, {
           credentials: "include",
         });
         const data = await res.json();

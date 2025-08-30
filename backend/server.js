@@ -5,6 +5,7 @@ const connectDB = require('./db/db');
 const http = require('http');
 const setupSocket = require('./sockets/index');
 const cookieParser = require('cookie-parser');
+const helmet = require("helmet");
 
 const authRoute = require('./routes/AuthRoutes');
 const projectRoutes = require('./routes/ProjectRoutes');
@@ -38,8 +39,10 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+
 
 // Routes
 app.use('/api/auth', authRoute);

@@ -46,7 +46,7 @@ const Register = asyncWrap(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "none",
     maxAge: 24 * 60 * 60 * 1000,
   });
 
@@ -86,7 +86,7 @@ const Login = asyncWrap(async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "none",
     maxAge: 24 * 60 * 60 * 1000,
   });
 
@@ -105,7 +105,11 @@ const Login = asyncWrap(async (req, res) => {
 
 // Logout User
 const Logout = asyncWrap(async (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  });
   res.json({ success: true, message: "Logged out successfully" });
 });
 

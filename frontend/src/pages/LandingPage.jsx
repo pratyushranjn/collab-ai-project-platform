@@ -54,7 +54,7 @@ export default function LandingPage() {
       </div>
 
       {/* Why Use Section */}
-      {/* <div className="mt-20 max-w-3xl w-full px-2">
+      <div className="mt-20 max-w-3xl w-full px-2">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-500">
           Why use Collab-AI?
         </h2>
@@ -76,7 +76,7 @@ export default function LandingPage() {
             Gain actionable insights with analytics and AI-powered dashboards.
           </li>
         </ul>
-      </div> */}
+      </div>
 
     </div>
   );

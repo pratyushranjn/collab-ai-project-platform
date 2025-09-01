@@ -10,15 +10,15 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  
   const isActive = (path) => {
     if (path === "/chat") {
-      // active on /chat or /projects/:id/chat
-      return location.pathname === "/chat" || /\/projects\/[^/]+\/chat$/.test(location.pathname);
+      return (
+        location.pathname === "/chat" ||
+        /\/projects\/[^/]+\/chat$/.test(location.pathname)
+      );
     }
     return location.pathname === path;
   };
-
 
   const handleProtectedNav = (path) => {
     if (user) {
@@ -51,7 +51,6 @@ export default function Sidebar() {
   }
 
   return (
-
     <aside id="sidebar">
       {/* Sidebar toggle button (mobile) */}
       <button
@@ -63,9 +62,10 @@ export default function Sidebar() {
 
       <div
         className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-black text-white w-64 border-t border-gray-700 transform transition-transform duration-300 z-40 
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 flex flex-col justify-between`}
       >
-        <nav className="mt-6 space-y-2 px-4">
+        {/* Navigation Links */}
+        <nav className="mt-6 space-y-2 px-4 flex-1">
           {links.map((item) => (
             <button
               key={item.path}
@@ -81,14 +81,15 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <div className="absolute bottom-6 left-0 w-full px-4">
+        <div className="px-4 py-4 border-t border-gray-700 bg-black">
           {user ? (
             <div className="flex items-center justify-between bg-gray-800 px-3 py-2 rounded">
-              <div className="flex items-center space-x-2 cursor-pointer">
+              <div className="flex items-center space-x-2 cursor-pointer overflow-hidden">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm ">{user.name}</span>
+
+                <span className="text-sm truncate">{user.name}</span>
               </div>
 
               <button
@@ -102,7 +103,6 @@ export default function Sidebar() {
             <p className="text-gray-400 text-sm">Not logged in</p>
           )}
         </div>
-      
       </div>
     </aside>
   );

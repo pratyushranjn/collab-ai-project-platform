@@ -7,9 +7,9 @@ export default function PublicRoute({ children }) {
   if (loading) return null;
 
   // If logged in → redirect to dashboard
-  if (user) {
-    return <Navigate to="/projects" replace />;
-  }
+  // if (user) {
+  //   return <Navigate to="/projects" replace />;
+  // }
 
   return children;
 }

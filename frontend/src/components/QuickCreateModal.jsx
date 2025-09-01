@@ -25,7 +25,7 @@ export default function QuickCreateModal({
 
   // Lists
   const [users, setUsers] = useState([]);
-  const [projects, setProjects] = useState([]); // ✅ for dropdown
+  const [projects, setProjects] = useState([]); // for dropdown
   const [assignee, setAssignee] = useState("");
 
   // Project create fields
@@ -173,7 +173,7 @@ export default function QuickCreateModal({
 
         {tab === "task" ? (
           <div className="space-y-3">
-            {/* ✅ Project dropdown (hide if coming from a project page) */}
+            {/* Project dropdown (hide if coming from a project page) */}
             {!defaultProjectId && (
               <select
                 value={task.projectId}
@@ -263,7 +263,7 @@ export default function QuickCreateModal({
             />
 
             {/* Project priority */}
-            <select
+            {/* <select
               value={project.priority}
               onChange={(e) => setProject({ ...project, priority: e.target.value })}
               className="px-3 py-2 rounded border border-neutral-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -272,7 +272,7 @@ export default function QuickCreateModal({
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
-            </select>
+            </select> */}
 
 
             {isAdmin && (

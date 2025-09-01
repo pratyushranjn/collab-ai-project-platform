@@ -22,7 +22,7 @@ export default function MindMap() {
 
   // Debug
   useEffect(() => {
-  //  console.log(" MindMap using per-user roomId:", roomId);
+    // console.log(" MindMap using per-user roomId:", roomId);
   }, [roomId]);
 
   // 🔹 Setup socket listeners
@@ -36,10 +36,14 @@ export default function MindMap() {
     socket.on("addShape", (shape) => setNodes((prev) => [...prev, shape]));
     socket.on("drawing", (data) => setLines((prev) => [...prev, data.line]));
     socket.on("moveNode", (data) =>
-      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
+      setNodes((prev) =>
+        prev.map((n) => (n.id === data.node.id ? data.node : n))
+      )
     );
     socket.on("editNodeText", (data) =>
-      setNodes((prev) => prev.map((n) => (n.id === data.node.id ? data.node : n)))
+      setNodes((prev) =>
+        prev.map((n) => (n.id === data.node.id ? data.node : n))
+      )
     );
     socket.on("clearBoard", () => {
       setNodes([]);
@@ -64,7 +68,8 @@ export default function MindMap() {
     if (!containerRef.current) return;
 
     const updateSize = (width) => {
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const vh =
+        window.innerHeight || document.documentElement.clientHeight || 0;
       const targetWidth = Math.round(width);
       const idealH = Math.round((targetWidth * 9) / 16);
 
@@ -87,7 +92,7 @@ export default function MindMap() {
     return () => ro.disconnect();
   }, []);
 
-  //  Handlers 
+  // Handlers
   const handleStageBlankClick = (e) => {
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage().getPointerPosition();
@@ -110,7 +115,10 @@ export default function MindMap() {
     if (selectedNode && selectedNode.id !== node.id) {
       const newLine = { from: selectedNode.id, to: node.id };
       setLines((prev) => [...prev, newLine]);
-      setHistory((prev) => [...prev, { type: "line", from: selectedNode.id, to: node.id }]);
+      setHistory((prev) => [
+        ...prev,
+        { type: "line", from: selectedNode.id, to: node.id },
+      ]);
       setSelectedNode(null);
 
       socket?.emit("drawing", { roomId, userId: user._id, line: newLine });
@@ -172,7 +180,9 @@ export default function MindMap() {
 
       if (last.type === "node") {
         setNodes((prevNodes) => prevNodes.filter((n) => n.id !== last.id));
-        setLines((prevLines) => prevLines.filter((l) => l.from !== last.id && l.to !== last.id));
+        setLines((prevLines) =>
+          prevLines.filter((l) => l.from !== last.id && l.to !== last.id)
+        );
       } else if (last.type === "line") {
         setLines((prevLines) => prevLines.slice(0, -1));
       }
@@ -207,12 +217,24 @@ export default function MindMap() {
   return (
     <div className="flex flex-col items-center p-4 sm:p-5 space-y-4 sm:space-y-5">
       <h1 className="text-2xl sm:text-3xl font-bold text-center">
-        My Personal Whiteboard 🧠
+        Whiteboard & Mindmap🧠
       </h1>
 
       <div className="flex gap-4 text-2xl cursor-pointer select-none">
-        <span onClick={handleUndo} title="Undo Last" className="hover:scale-110 transition-transform">🩹</span>
-        <span onClick={handleClear} title="Clear All" className="hover:scale-110 transition-transform">🧹</span>
+        <span
+          onClick={handleUndo}
+          title="Undo Last"
+          className="hover:scale-110 transition-transform"
+        >
+          🩹
+        </span>
+        <span
+          onClick={handleClear}
+          title="Clear All"
+          className="hover:scale-110 transition-transform"
+        >
+          🧹
+        </span>
       </div>
 
       <div
@@ -237,8 +259,7 @@ export default function MindMap() {
             {lines.map((line, i) =>
               line.freehand ? (
                 <Line key={i} {...line} />
-              ) : (
-                (() => {
+              ) : (() => {
                   const fromNode = nodes.find((n) => n.id === line.from);
                   const toNode = nodes.find((n) => n.id === line.to);
                   if (!fromNode || !toNode) return null;
@@ -254,7 +275,6 @@ export default function MindMap() {
                     />
                   );
                 })()
-              )
             )}
 
             {/* Nodes */}
@@ -271,7 +291,13 @@ export default function MindMap() {
                     onDragEnd={(e) => handleDragEnd(node, e)}
                     onDblClick={() => handleDoubleClick(node)}
                   />
-                  <Text x={node.x - 28} y={node.y - 8} text={node.text} fontSize={14} fill="white" />
+                  <Text
+                    x={node.x - 28}
+                    y={node.y - 8}
+                    text={node.text}
+                    fontSize={14}
+                    fill="white"
+                  />
                 </React.Fragment>
               ) : (
                 <React.Fragment key={node.id}>
@@ -304,8 +330,9 @@ export default function MindMap() {
       </div>
 
       <p className="text-xs sm:text-sm text-center max-w-3xl px-3 text-gray-400">
-        This whiteboard is private to you. Click canvas to add nodes. Click two nodes to connect them. 
-        Drag to move. Double-click to edit text. Hold and drag to draw freehand (touch supported).
+        This whiteboard is private to you. Click canvas to add nodes. Click two
+        nodes to connect them. Drag to move. Double-click to edit text. Hold and
+        drag to draw freehand (touch supported).
       </p>
     </div>
   );

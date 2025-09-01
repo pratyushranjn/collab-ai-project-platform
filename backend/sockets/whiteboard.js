@@ -34,7 +34,7 @@ async function saveBoard(roomId, updateFn, action) {
 
 // Register all socket events
 function registerWhiteboard(socket) {
-  console.log("[Whiteboard] Socket registered:", socket.id);
+  // console.log("[Whiteboard] Socket registered:", socket.id);
 
   // join room
   socket.on("joinMindMap", async ({ roomId }) => {

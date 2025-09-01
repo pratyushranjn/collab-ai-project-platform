@@ -28,7 +28,7 @@ async function authMiddleware(socket, next) {
 
     socket.user = {
       id: user._id.toString(),
-      _id: user._id,        
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -44,6 +44,7 @@ const userSockets = new Map(); // userId -> Set<socketId>
 function setupSocket(server, allowedOrigins) {
   const io = new Server(server, {
     cors: { origin: allowedOrigins, credentials: true },
+    methods: ["GET", "POST"],
   });
 
   io.use(authMiddleware);
@@ -56,9 +57,9 @@ function setupSocket(server, allowedOrigins) {
 
     socket.join(`user:${userId}`);
 
-    registerAIIdeas(socket);         
-    registerWhiteboard(socket);      
-    registerProjectChat(socket, io); 
+    registerAIIdeas(socket);
+    registerWhiteboard(socket);
+    registerProjectChat(socket, io);
 
     socket.on("disconnect", () => {
       const set = userSockets.get(userId);

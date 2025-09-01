@@ -76,7 +76,7 @@ export default function Navbar() {
   };
 
   // Callback when modal creates something
-  const handleCreated = ({ type, project, task }) => {
+  const handleCreated = ({ type, project }) => {
     if (type === "project" && project?._id) {
       navigate(`/projects/${project._id}`);
     }
@@ -171,27 +171,31 @@ export default function Navbar() {
                     {showNotifications && (
                       <div
                         role="menu"
-                        className="absolute right-0 mt-2 w-80 max-h-[60vh] overflow-auto bg-black text-white rounded-lg border border-gray-800 shadow-lg p-3 z-50"
+                        className="absolute right-0 mt-2 w-80 sm:w-96 max-h-[70vh] overflow-auto bg-black text-white rounded-lg border border-gray-800 shadow-lg p-3 z-50"
                       >
                         <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                           <p className="text-sm text-gray-400">🔔 Notifications</p>
                           {unread > 0 ? (
                             <span className="text-xs text-red-400">{unread} new</span>
                           ) : (
-                            <span className="text-xs text-gray-500">
-                              All caught up
-                            </span>
+                            <span className="text-xs text-gray-500">All caught up</span>
                           )}
                         </div>
 
                         <div className="mt-2 space-y-2">
                           {notifications.length === 0 && (
-                            <div className="text-sm text-gray-500 py-6 text-center">
-                              No notifications yet
+                            <div className="flex flex-col items-center justify-center py-6 text-gray-500">
+                              <Bell className="w-6 h-6 mb-1 opacity-50" />
+                              <p className="text-sm">No notifications yet</p>
                             </div>
                           )}
 
                           {notifications.map((n) => {
+                            const relative = new Date(n.createdAt).toLocaleTimeString(
+                              [],
+                              { hour: "2-digit", minute: "2-digit" }
+                            );
+
                             if (n.type === "task.assigned") {
                               return (
                                 <button
@@ -201,20 +205,22 @@ export default function Navbar() {
                                       `/projects/${n.data.projectId}?task=${n.data.taskId}`
                                     )
                                   }
-                                  className={`w-full text-left p-2 rounded hover:bg-gray-800 ${
+                                  className={`w-full text-left p-3 rounded hover:bg-gray-800 flex flex-col items-start gap-0.5 ${
                                     !n.read ? "bg-gray-900/50" : ""
                                   }`}
                                 >
-                                  <div className="text-sm">
-                                    <span className="font-medium">
-                                      Task assigned:
-                                    </span>{" "}
-                                    {n.data.title}
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-sm font-medium">
+                                      Task assigned
+                                    </span>
+                                    {!n.read && (
+                                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                                    )}
                                   </div>
-                                  <div className="text-xs text-gray-400">
-                                    Project: {n.data.projectName} •{" "}
-                                    {new Date(n.createdAt).toLocaleString()}
-                                  </div>
+                                  <p className="text-sm text-gray-300">{n.data.title}</p>
+                                  <span className="text-xs text-gray-500">
+                                    {n.data.projectName} • {relative}
+                                  </span>
                                 </button>
                               );
                             }
@@ -228,23 +234,24 @@ export default function Navbar() {
                                       `/projects/${n.data.projectId}/chat?mid=${n.data.messageId}`
                                     )
                                   }
-                                  className={`w-full text-left p-2 rounded hover:bg-gray-800 ${
+                                  className={`w-full text-left p-3 rounded hover:bg-gray-800 flex flex-col items-start gap-0.5 ${
                                     !n.read ? "bg-gray-900/50" : ""
                                   }`}
                                 >
-                                  <div className="text-sm">
-                                    <span className="font-medium">
-                                      {n.data.sender?.name || "Someone"}
-                                    </span>{" "}
-                                    sent a message
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-sm font-medium">
+                                      {n.data.sender?.name || "Someone"} sent a message
+                                    </span>
+                                    {!n.read && (
+                                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                                    )}
                                   </div>
-                                  <div className="text-xs text-gray-400 line-clamp-1">
+                                  <p className="text-xs text-gray-400 line-clamp-1">
                                     {n.data.text}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    {n.data.projectName} •{" "}
-                                    {new Date(n.createdAt).toLocaleString()}
-                                  </div>
+                                  </p>
+                                  <span className="text-xs text-gray-500">
+                                    {n.data.projectName} • {relative}
+                                  </span>
                                 </button>
                               );
                             }
@@ -252,10 +259,9 @@ export default function Navbar() {
                             return (
                               <div
                                 key={n._cid}
-                                className="p-2 rounded bg-gray-900/40 text-sm text-gray-300"
+                                className="p-3 rounded bg-gray-900/40 text-sm text-gray-300"
                               >
-                                New activity •{" "}
-                                {new Date(n.createdAt).toLocaleString()}
+                                New activity • {relative}
                               </div>
                             );
                           })}
@@ -298,7 +304,7 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={showLoginModal}
-                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition text-sm sm:text-base"
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition text-sm sm:text-base cursor-pointer"
                 >
                   Login / Register
                 </button>

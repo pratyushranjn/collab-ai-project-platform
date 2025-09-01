@@ -7,6 +7,8 @@ const setupSocket = require('./sockets/index');
 const cookieParser = require('cookie-parser');
 const helmet = require("helmet");
 
+const morganMiddleware = require("./middleware/logger");
+
 const authRoute = require('./routes/AuthRoutes');
 const projectRoutes = require('./routes/ProjectRoutes');
 const taskRoutes = require("./routes/taskRoutes");
@@ -42,7 +44,7 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(morganMiddleware);
 
 // Routes
 app.use('/api/auth', authRoute);

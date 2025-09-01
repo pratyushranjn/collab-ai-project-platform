@@ -10,8 +10,6 @@ export default function AIIdeas() {
   const API_URL = import.meta.env.VITE_BASE_URL 
   const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
 
-  console.log(API_URL, "---", SOCKET_URL);
-
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -200,7 +198,7 @@ export default function AIIdeas() {
                 : "bg-blue-500 hover:bg-blue-600 active:scale-[0.98]"
             }`}
           >
-            {thinking ? "…" : "Send"}
+            {thinking ? "…" : "Send"} 
           </button>
         </div>
         {error && (

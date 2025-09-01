@@ -26,7 +26,7 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
     if (loading) return;
     setLoading(true);
     try {
-      const res = await api.put(`/users/${user._id}`, formData); 
+      const res = await api.put(`/users/${user._id}`, formData);
 
       // Accept common response shapes
       const updatedUser = res?.data?.data ?? res?.data?.user ?? res?.data;
@@ -51,16 +51,17 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-    
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose} // close when clicking outside
+    >
       <div
         className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-md border border-gray-800"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // prevent close on modal click
         role="dialog"
         aria-modal="true"
         aria-labelledby="update-profile-title"
       >
-
         <div className="flex items-center justify-between p-5 border-b border-gray-800">
           <h2 id="update-profile-title" className="text-lg font-semibold text-white">
             Update Profile
@@ -71,15 +72,27 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
             className="text-gray-400 hover:text-white transition-colors focus:outline-none"
             aria-label="Close"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Name
+            </label>
             <input
               type="text"
               name="name"
@@ -91,7 +104,9 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name="email"

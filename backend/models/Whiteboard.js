@@ -6,16 +6,16 @@ const WhiteboardSchema = new mongoose.Schema(
 
     // Global whiteboard state
     data: {
-      type: mongoose.Schema.Types.Mixed, // ✅ allows nested objects
+      type: mongoose.Schema.Types.Mixed,
       default: { nodes: [], lines: [] }
     },
 
-    // Audit log of all actions, linked to user
+    // Audit log of all actions
     actions: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        type: { type: String, required: true }, // addShape, drawLine, moveNode, editNodeText, clearBoard
-        payload: { type: Object, required: true },
+        type: { type: String, required: true }, // e.g. addShape, moveNode
+        payload: { type: Object, default: {} }, // always at least {}
         timestamp: { type: Date, default: Date.now }
       }
     ]

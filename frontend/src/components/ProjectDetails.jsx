@@ -19,7 +19,7 @@ export default function ProjectDetails() {
   const [taskForm, setTaskForm] = useState({
     title: "",
     description: "",
-    assignedTo: "", // single user from dropdown
+    assignedTo: "",
     priority: "low",
   });
 
@@ -72,7 +72,6 @@ export default function ProjectDetails() {
     e.preventDefault();
     if (!isPM && !isAdmin) return;
 
-    // normalize payload
     const payload = {
       ...taskForm,
       assignedTo: taskForm.assignedTo ? [taskForm.assignedTo] : [],
@@ -123,8 +122,8 @@ export default function ProjectDetails() {
     const arr = Array.isArray(assignedTo)
       ? assignedTo
       : assignedTo
-        ? [assignedTo]
-        : [];
+      ? [assignedTo]
+      : [];
 
     if (arr.length === 0) return "—";
 
@@ -138,36 +137,37 @@ export default function ProjectDetails() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-6xl mx-auto p-4 lg:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <Link to="/projects" className="text-blue-600 hover:underline">
           ← Back to Projects
         </Link>
 
         {project?._id && (
-
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-
-              onClick={() => navigate(`/projects/${project._id}/chat`, {
-                state: { projectName: project.name }
-              })}
-              className="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600 cursor-pointer"
+              onClick={() =>
+                navigate(`/projects/${project._id}/chat`, {
+                  state: { projectName: project.name },
+                })
+              }
+              className="text-sm sm:text-base px-3 py-2 rounded-md bg-gray-700 text-white hover:bg-gray-600 cursor-pointer"
             >
               Open Chat
             </button>
 
             <button
               onClick={() => navigate(`/board?projectId=${project._id}`)}
-              className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+              className="text-sm sm:text-base px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
             >
               Open Board
             </button>
+
             {isAdmin && (
               <button
                 onClick={deleteProject}
-                className="px-3 py-1.5 rounded bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                className="text-sm sm:text-base px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 cursor-pointer"
               >
                 Delete Project
               </button>
@@ -180,45 +180,64 @@ export default function ProjectDetails() {
       {loadingProject ? (
         <h2>Loading project…</h2>
       ) : project ? (
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">{project.name}</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold">{project.name}</h1>
           <p className="text-gray-600">{project.description}</p>
         </div>
       ) : (
         <p className="text-red-500">Project not found.</p>
       )}
 
-      {error && <div className="mb-4 p-2 bg-red-50 text-red-600 rounded">{error}</div>}
+      {error && (
+        <div className="mb-6 p-3 bg-red-50 text-red-600 rounded">{error}</div>
+      )}
 
-      <h2 className="text-xl font-semibold mb-3">Tasks</h2>
+      <h2 className="text-2xl font-semibold mb-4">Tasks</h2>
 
       {/* Create Task */}
       {(isPM || isAdmin) && (
-        <form onSubmit={createTask} className="grid gap-2 mb-6">
+        <form
+          onSubmit={createTask}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"
+        >
           <input
             placeholder="Task title"
             value={taskForm.title}
-            onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))}
-            className="px-3 py-2 rounded border"
+            onChange={(e) =>
+              setTaskForm((f) => ({ ...f, title: e.target.value }))
+            }
+            className="px-3 py-2 rounded border w-full"
             required
           />
+          <select
+            value={taskForm.priority}
+            onChange={(e) =>
+              setTaskForm((f) => ({ ...f, priority: e.target.value }))
+            }
+            className="px-3 py-2 rounded border border-neutral-700 text-white w-full"
+            style={{ backgroundColor: "#000212" }}
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+
           <textarea
             placeholder="Task description"
             value={taskForm.description}
             onChange={(e) =>
               setTaskForm((f) => ({ ...f, description: e.target.value }))
             }
-            className="px-3 py-2 rounded border"
+            className="px-3 py-2 rounded border w-full md:col-span-2"
             rows={3}
           />
 
-          {/* Assigned To (simple dropdown) */}
           <select
             value={taskForm.assignedTo}
             onChange={(e) =>
               setTaskForm((f) => ({ ...f, assignedTo: e.target.value }))
             }
-            className="px-3 py-2 rounded border border-neutral-700 text-white"
+            className="px-3 py-2 rounded border border-neutral-700 text-white w-full md:col-span-2"
             style={{ backgroundColor: "#000212" }}
           >
             <option value="">Assign to</option>
@@ -229,22 +248,9 @@ export default function ProjectDetails() {
             ))}
           </select>
 
-          <select
-            style={{ backgroundColor: "#000212" }}
-            value={taskForm.priority}
-            onChange={(e) =>
-              setTaskForm((f) => ({ ...f, priority: e.target.value }))
-            }
-            className="px-3 py-2 rounded border border-neutral-700 text-white"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-
           <button
             type="submit"
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            className="text-sm sm:text-base px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto md:col-span-2"
           >
             Add Task
           </button>
@@ -257,30 +263,30 @@ export default function ProjectDetails() {
       ) : tasks.length === 0 ? (
         <p className="text-gray-500">No tasks yet.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {tasks.map((t) => (
             <div
               key={t._id}
-              className="border rounded-lg p-4 flex justify-between items-start"
+              className="border rounded-lg p-4 flex flex-col justify-between gap-3"
             >
               <div>
-                <h3 className="font-medium">{t.title}</h3>
+                <h3 className="font-medium text-lg">{t.title}</h3>
                 {t.description && (
                   <p className="text-sm text-gray-600">{t.description}</p>
                 )}
                 <div className="text-xs text-gray-500 mt-1">
-                  <b>Status:</b> {t.status || "todo"}{" "}
-                  {" | "} <b>Assigned:</b> {renderAssignees(t.assignedTo)}
+                  <b>Status:</b> {t.status || "todo"} {" | "}
+                  <b>Assigned:</b> {renderAssignees(t.assignedTo)}
                 </div>
               </div>
 
               {(isPM || isAdmin) && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap gap-2">
                   <select
-                    style={{ backgroundColor: "#000212" }}
                     value={t.status || "todo"}
                     onChange={(e) => updateTaskStatus(t._id, e.target.value)}
-                    className="px-2 py-1 text-sm rounded border border-neutral-700 text-white focus:ring-2 focus:ring-blue-600"
+                    className="text-sm px-2 py-1 rounded-md border border-neutral-700 text-white"
+                    style={{ backgroundColor: "#000212" }}
                   >
                     <option value="todo">Todo</option>
                     <option value="in-progress">In-progress</option>
@@ -292,13 +298,14 @@ export default function ProjectDetails() {
                       setSelectedTask(t);
                       setIsModalOpen(true);
                     }}
-                    className="px-2 py-1 text-sm rounded bg-yellow-500 text-black"
+                    className="text-sm px-3 py-1 rounded-md bg-yellow-500 text-black"
                   >
                     Edit
                   </button>
+
                   <button
                     onClick={() => deleteTask(t._id)}
-                    className="px-2 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                    className="text-sm px-3 py-1 rounded-md bg-red-600 text-white hover:bg-red-700"
                   >
                     Delete
                   </button>
@@ -319,7 +326,3 @@ export default function ProjectDetails() {
     </div>
   );
 }
-
-
-
-

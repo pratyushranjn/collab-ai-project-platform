@@ -70,6 +70,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("notifications"); // extra safety
     logout();
     toast.success("Logged out successfully!");
     setTimeout(() => navigate("/"), 1000);
@@ -157,7 +158,7 @@ export default function Navbar() {
                       className="relative p-2 rounded-full hover:bg-gray-800 transition"
                       onClick={() => {
                         toggleMenu("notif");
-                        if (!showNotifications) markAllRead();
+                        if (!showNotifications) markAllRead(); // clears localStorage + state
                       }}
                     >
                       <Bell size={20} />
@@ -175,96 +176,16 @@ export default function Navbar() {
                       >
                         <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                           <p className="text-sm text-gray-400">🔔 Notifications</p>
-                          {unread > 0 ? (
-                            <span className="text-xs text-red-400">{unread} new</span>
-                          ) : (
-                            <span className="text-xs text-gray-500">All caught up</span>
-                          )}
+                          <span className="text-xs text-gray-500">All cleared</span>
                         </div>
 
                         <div className="mt-2 space-y-2">
                           {notifications.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-6 text-gray-500">
                               <Bell className="w-6 h-6 mb-1 opacity-50" />
-                              <p className="text-sm">No notifications yet</p>
+                              <p className="text-sm">No notifications</p>
                             </div>
                           )}
-
-                          {notifications.map((n) => {
-                            const relative = new Date(n.createdAt).toLocaleTimeString(
-                              [],
-                              { hour: "2-digit", minute: "2-digit" }
-                            );
-
-                            if (n.type === "task.assigned") {
-                              return (
-                                <button
-                                  key={n._cid}
-                                  onClick={() =>
-                                    navigate(
-                                      `/projects/${n.data.projectId}?task=${n.data.taskId}`
-                                    )
-                                  }
-                                  className={`w-full text-left p-3 rounded hover:bg-gray-800 flex flex-col items-start gap-0.5 ${
-                                    !n.read ? "bg-gray-900/50" : ""
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="text-sm font-medium">
-                                      Task assigned
-                                    </span>
-                                    {!n.read && (
-                                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                                    )}
-                                  </div>
-                                  <p className="text-sm text-gray-300">{n.data.title}</p>
-                                  <span className="text-xs text-gray-500">
-                                    {n.data.projectName} • {relative}
-                                  </span>
-                                </button>
-                              );
-                            }
-
-                            if (n.type === "chat.message") {
-                              return (
-                                <button
-                                  key={n._cid}
-                                  onClick={() =>
-                                    navigate(
-                                      `/projects/${n.data.projectId}/chat?mid=${n.data.messageId}`
-                                    )
-                                  }
-                                  className={`w-full text-left p-3 rounded hover:bg-gray-800 flex flex-col items-start gap-0.5 ${
-                                    !n.read ? "bg-gray-900/50" : ""
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="text-sm font-medium">
-                                      {n.data.sender?.name || "Someone"} sent a message
-                                    </span>
-                                    {!n.read && (
-                                      <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-gray-400 line-clamp-1">
-                                    {n.data.text}
-                                  </p>
-                                  <span className="text-xs text-gray-500">
-                                    {n.data.projectName} • {relative}
-                                  </span>
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <div
-                                key={n._cid}
-                                className="p-3 rounded bg-gray-900/40 text-sm text-gray-300"
-                              >
-                                New activity • {relative}
-                              </div>
-                            );
-                          })}
                         </div>
                       </div>
                     )}

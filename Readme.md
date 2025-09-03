@@ -1,19 +1,43 @@
 # 🚀 Collaborative AI-Powered Project Platform  
-**By [Pratyush Ranjan](https://github.com/pratyushranjn)**
 
 Hey there! 👋  
-This is my official GitHub repository for the **Collaborative AI-Powered Project Platform** — a full-stack web app built to streamline project collaboration with the help of AI.
+This is my official GitHub repository for the **Collaborative AI-Powered Project Management Platform (CollabHub)** — a full-stack web app designed to combine the best of **Trello + Notion + Slack + Miro** into one seamless solution for team collaboration and productivity.  
 
-🔗 **Repository Link:** https://github.com/pratyushranjn/collab-ai-project-platform
+💡 This project was developed as part of my **Full Stack Development Internship at Infotact Solutions**, where I worked on integrating **real-time collaboration, AI-powered ideation, and scalable project management features** into a single platform.  
+
+🔗 **Repository Link:** [collab-ai-project-platform](https://github.com/pratyushranjn/collab-ai-project-platform)  
 
 ---
 
-## 📁 Folder Structure
+## 📁 Folder Structure  
 
-The project is organized into two main parts:
+The project is organized into two main parts:  
 
-- `frontend/` – built with **React**, **Tailwind CSS**, and **Vite**
-- `backend/` – built with **Node.js** and **MongoDB**
+- `frontend/` – built with **React**, **Tailwind CSS**, and **Vite**  
+- `backend/` – built with **Node.js** and **MongoDB**  
+
+---
+
+## 🔑 Key Features  
+
+- 🔐 **User Authentication & Role-Based Access Control (RBAC)** – Admin, Manager, Member  
+- 🤖 **AI Assistant** – for idea generation & brainstorming  
+- 📋 **Kanban-style Task Management** – with drag & drop  
+- 🖊 **Real-time Whiteboard** – shapes, lines, mind maps, and board clearing  
+- 💬 **Project-based Group Chat & Threaded Discussions** – real-time messaging with instant notifications (Socket.IO)  
+- 🗂 **Project & Task APIs** – CRUD operations with MongoDB + Express  
+- 📊 **Analytics Dashboard** – insights for projects & tasks  
+- ⚙️ **Admin Panel** – manage projects, users, and roles  
+
+---
+
+## 🛠️ Tech Stack  
+
+- **Frontend:** React, Vite, Tailwind CSS  
+- **Backend:** Node.js, Express, MongoDB  
+- **Real-time:** Socket.IO  
+- **Auth:** JWT (JSON Web Tokens)  
+- **AI Integration:** Gemini API  
 
 ---
 
@@ -45,6 +69,6 @@ The project is organized into two main parts:
 ## 🚧 Work in Progress
 
 More features and improvements are coming soon.  
-Feel free to star ⭐ the repo or contribute!
+Feel free to star ⭐ the repo!
 
 ---

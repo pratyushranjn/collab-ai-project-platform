@@ -56,7 +56,7 @@ export default function LandingPage() {
       {/* Why Use Section */}
       <div className="mt-20 max-w-3xl w-full px-2">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-500">
-          Why use Collab-AI?
+          Why use Collab-Hub?
         </h2>
         <ul className="space-y-4 text-gray-300 text-sm md:text-base">
           <li className="flex items-start">

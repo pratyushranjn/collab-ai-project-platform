@@ -12,7 +12,12 @@ export default function ProtectedRoute({ children, roles }) {
   }, [loading, user, showLoginModal]);
 
   if (loading) {
-    return <div className="text-center py-10">Checking authentication…</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+        <p className="text-sm">Checking authentication…</p>
+      </div>
+    );
   }
 
   if (!user) {

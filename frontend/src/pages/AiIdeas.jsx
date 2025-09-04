@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 export default function AIIdeas() {
   const { user, loading } = useAuth();
 
-  const API_URL = import.meta.env.VITE_BASE_URL 
+  const API_URL = import.meta.env.VITE_BASE_URL
   const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
 
   const [messages, setMessages] = useState([]);
@@ -51,7 +51,7 @@ export default function AIIdeas() {
     // Handle new messages from server
     const handleNewMessage = (msg) => {
       setMessages((prev) => {
-        
+
         if (msg.clientId) {
           const index = prev.findIndex((m) => m.clientId === msg.clientId);
           if (index !== -1) {
@@ -148,23 +148,30 @@ export default function AIIdeas() {
           const isUser = m.sender === "user";
           const key = m._id || m.clientId || `${m.sender}-${Date.now()}`;
 
+          let cleanText = ''
+          if (typeof m.text === "string") {
+            cleanText = m.text
+              .trim()
+              .replace(/\n{2,}/g, "\n") 
+              .replace(/([a-z])\)\s*\n(?=\w)/gi, "$1)\n\n") 
+              .replace(/(?<!\n)\n(?=[A-Z])/g, "\n\n"); 
+          }
+
           return (
             <div
               key={key}
-              className={`w-fit max-w-full sm:max-w-2xl rounded-2xl p-3 sm:p-4 shadow ${
-                isUser
-                  ? "ml-auto bg-blue-600/10 border border-blue-700/40"
-                  : "mr-auto bg-gray-800/60 border border-gray-700/50"
-              }`}
+              className={`w-fit max-w-full sm:max-w-2xl rounded-2xl p-3 sm:p-4 shadow ${isUser
+                ? "ml-auto bg-blue-600/10 border border-blue-700/40"
+                : "mr-auto bg-gray-800/60 border border-gray-700/50"
+                }`}
             >
-              <div className={`mb-1 text-[10px] sm:text-xs ${
-                isUser ? "text-blue-300/80" : "text-gray-300/80"
-              }`}>
+              <div className={`mb-1 text-[10px] sm:text-xs ${isUser ? "text-blue-300/80" : "text-gray-300/80"
+                }`}>
                 {isUser ? "You" : "AI"}
               </div>
-              <div className="prose prose-invert max-w-none">
+              <div className="prose prose-invert max-w-none whitespace-pre-wrap">
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
-                  {m.text || ""}
+                  {cleanText}
                 </ReactMarkdown>
               </div>
               <div className="mt-2 text-[10px] text-gray-400">
@@ -192,13 +199,12 @@ export default function AIIdeas() {
           <button
             onClick={send}
             disabled={thinking || !prompt.trim()}
-            className={`shrink-0 rounded-xl px-4 py-2 transition ${
-              thinking || !prompt.trim()
-                ? "bg-gray-700 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600 active:scale-[0.98]"
-            }`}
+            className={`shrink-0 rounded-xl px-4 py-2 transition ${thinking || !prompt.trim()
+              ? "bg-gray-700 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 active:scale-[0.98]"
+              }`}
           >
-            {thinking ? "…" : "Send"} 
+            {thinking ? "…" : "Send"}
           </button>
         </div>
         {error && (

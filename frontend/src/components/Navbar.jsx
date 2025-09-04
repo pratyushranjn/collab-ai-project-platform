@@ -12,7 +12,7 @@ import { useNotifications } from "../context/NotificationsContext";
 
 export default function Navbar() {
   const { user, logout, showLoginModal, closeLoginModal, modalOpen } = useAuth();
-  const { items: notifications, unread, markAllRead } = useNotifications();
+  const { items: notifications, unread, markAllRead, removeNotification } = useNotifications();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +70,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("notifications"); // extra safety
+    localStorage.removeItem("notifications"); 
     logout();
     toast.success("Logged out successfully!");
     setTimeout(() => navigate("/"), 1000);
@@ -90,8 +90,8 @@ export default function Navbar() {
       <nav className="fixed top-0 left-0 w-full bg-black text-white shadow-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center h-16 justify-end md:justify-between">
-            {/* Logo */}
-            <Link to="/" className="hidden md:flex items-center space-x-2">
+       
+            <Link to="/projects" className="hidden md:flex items-center space-x-2">
               <img
                 src="/humanoid-robot_18220260.png"
                 alt="Logo"
@@ -156,10 +156,7 @@ export default function Navbar() {
                       aria-haspopup="menu"
                       aria-expanded={showNotifications}
                       className="relative p-2 rounded-full hover:bg-gray-800 transition"
-                      onClick={() => {
-                        toggleMenu("notif");
-                        if (!showNotifications) markAllRead(); // clears localStorage + state
-                      }}
+                      onClick={() => toggleMenu("notif")}
                     >
                       <Bell size={20} />
                       {unread > 0 && (
@@ -180,13 +177,50 @@ export default function Navbar() {
                         </div>
 
                         <div className="mt-2 space-y-2">
-                          {notifications.length === 0 && (
+                          {notifications.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-6 text-gray-500">
                               <Bell className="w-6 h-6 mb-1 opacity-50" />
                               <p className="text-sm">No notifications</p>
                             </div>
+                          ) : (
+                            notifications.map((n) => (
+                              <div
+                                key={n._cid}
+                                onClick={() => {
+                                  removeNotification(n._cid);
+
+                                  // redirect
+                                  if (n.type === "task.assigned" && n.data?.projectId) {
+                                    navigate(`/projects/${n.data.projectId}`);
+                                  }
+                                  if (n.type === "chat.message" && n.data?.projectId) {
+                                    navigate(`/projects/${n.data.projectId}/chat`);
+                                  }
+
+                                  setShowNotifications(false);
+                                }}
+                                className="px-2 py-1 text-sm cursor-pointer hover:text-blue-400 transition"
+
+                              >
+                                {n.type === "task.assigned" && (
+                                  <p>
+                                    <span className="font-semibold">{n.data.title}</span> in{" "}
+                                    <span className="text-blue-400">{n.data.projectName}</span>
+                                  </p>
+                                )}
+                                {n.type === "chat.message" && (
+                                  <p>
+                                    💬 <span className="font-semibold">{n.data.sender}</span> in{" "}
+                                    <span className="text-blue-400">{n.data.projectName}</span>
+                                  </p>
+                                )}
+                              </div>
+
+                            ))
                           )}
                         </div>
+
+
                       </div>
                     )}
                   </div>

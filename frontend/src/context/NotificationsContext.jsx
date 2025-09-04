@@ -38,11 +38,11 @@ export const NotificationsProvider = ({ children }) => {
     const safeData =
       n.type === "chat.message"
         ? {
-            projectId: n.data.projectId,
-            projectName: n.data.projectName,
-            messageId: n.data.messageId,
-            sender: n.data.sender?.name || "Unknown",
-          }
+          projectId: n.data.projectId,
+          projectName: n.data.projectName,
+          messageId: n.data.messageId,
+          sender: n.data.sender?.name || "Unknown",
+        }
         : n.data;
 
     setItems((prev) => {
@@ -56,21 +56,27 @@ export const NotificationsProvider = ({ children }) => {
         },
         ...prev,
       ];
-      return next.slice(0, 25); 
+      return next.slice(0, 25);
     });
   };
 
   const markAllRead = () => {
     setItems([]);
-    localStorage.removeItem("notifications"); // clear storage when seen
+    localStorage.removeItem("notifications");
     setUnread(0);
   };
+
+  const removeNotification = (id) => {
+    setItems((prev) => prev.filter((n) => n._cid !== id));
+  };
+
 
   const markOneRead = (id) => {
     setItems((prev) =>
       prev.map((n) => (n._cid === id ? { ...n, read: true } : n))
     );
   };
+  
 
   // Socket listeners
   useEffect(() => {
@@ -107,8 +113,9 @@ export const NotificationsProvider = ({ children }) => {
       items,
       unread,
       push,
-      markAllRead, 
+      markAllRead,
       markOneRead,
+      removeNotification
     }),
     [items, unread]
   );

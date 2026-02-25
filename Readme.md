@@ -1,9 +1,7 @@
 # 🚀 Collaborative AI-Powered Project Platform  
 
 Hey there! 👋  
-This is my official GitHub repository for the **Collaborative AI-Powered Project Management Platform (CollabHub)** — a full-stack web app designed to combine the best of **Trello + Notion + Slack + Miro** into one seamless solution for team collaboration and productivity.  
-
-💡 This project was developed as part of my **Full Stack Development Internship at Infotact Solutions**, where I worked on integrating **real-time collaboration, AI-powered ideation, and scalable project management features** into a single platform.  
+This is the GitHub repository for **CollabHub** — a full-stack web app for project planning, task tracking, team chat, and whiteboarding.  
 
 🔗 **Repository Link:** [collab-ai-project-platform](https://github.com/pratyushranjn/collab-ai-project-platform)  
 
@@ -21,12 +19,12 @@ The project is organized into two main parts:
 ## 🔑 Key Features  
 
 - 🔐 **User Authentication & Role-Based Access Control (RBAC)** – Admin, Manager, Member  
-- 🤖 **AI Assistant** – for idea generation & brainstorming  
+- 🤖 **AI Assistant** – idea generation and brainstorming  
 - 📋 **Kanban-style Task Management** – with drag & drop  
 - 🖊 **Real-time Whiteboard** – shapes, lines, mind maps, and board clearing  
-- 💬 **Project-based Group Chat & Threaded Discussions** – real-time messaging with instant notifications (Socket.IO)  
+- 💬 **Project-based Group Chat & Threaded Discussions** – real-time messaging with notifications (Socket.IO)  
 - 🗂 **Project & Task APIs** – CRUD operations with MongoDB + Express  
-- 📊 **Analytics Dashboard** – insights for projects & tasks  
+- 📊 **Analytics Dashboard** – project and task metrics  
 - ⚙️ **Admin Panel** – manage projects, users, and roles  
 
 ---
@@ -66,9 +64,3 @@ The project is organized into two main parts:
 
 ---
 
-## 🚧 Work in Progress
-
-More features and improvements are coming soon.  
-Feel free to star ⭐ the repo!
-
----

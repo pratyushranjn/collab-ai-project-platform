@@ -42,18 +42,21 @@ The project is organized into two main parts:
 # 🏗️ System Architecture
 
 Frontend (React / Vite / Tailwind)
-        │
-        │ REST API + WebSockets
-        ▼
+│
+│ REST API + WebSockets
+▼
 Backend (Node.js + Express)
-        │
-        ├── Authentication (JWT + RBAC)
-        ├── Project & Task APIs
-        ├── Chat Service (Socket.IO)
-        └── Notification System
-        │
-        ▼
+│
+├── Authentication (JWT + RBAC)
+├── Project & Task APIs
+├── Chat Service (Socket.IO)
+└── Notification System
+│
+▼
 Database (MongoDB)
+
+
+---
 
 ## 🖼️ UI Previews
 

@@ -4,8 +4,18 @@ const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
 const { notifyUser } = require('../sockets/notify');
 
+const DEMO_ADMIN_EMAIL = 'demo@aicollabhub.com';
+
+function blockDemoAdminWrite(user) {
+    const email = String(user?.email || '').toLowerCase();
+    if (email === DEMO_ADMIN_EMAIL) {
+        throw new ExpressError(403, 'Demo admin is not allowed to perform this action');
+    }
+}
+
 // Create New Task
 const createTask = asyncWrap(async (req, res) => {
+    blockDemoAdminWrite(req.user);
     const { projectId } = req.params;
     const { title, description, assignedTo, priority } = req.body;
 
@@ -80,6 +90,7 @@ const getTasks = asyncWrap(async (req, res) => {
 
 // Update Task
 const updateTask = asyncWrap(async (req, res) => {
+    blockDemoAdminWrite(req.user);
     const updates = req.body;
     console.log(updates);
     const task = await Task.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
@@ -91,6 +102,7 @@ const updateTask = asyncWrap(async (req, res) => {
 
 // Delete Task
 const deleteTask = asyncWrap(async (req, res) => {
+    blockDemoAdminWrite(req.user);
     const task = await Task.findByIdAndDelete(req.params.id);
     if (!task) throw new ExpressError(404, 'Task not found');
 

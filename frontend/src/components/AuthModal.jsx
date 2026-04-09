@@ -3,10 +3,14 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
+import DemoCredentialsCard from "./DemoCredentialsCard";
 import '../App.css'
 
 
 export default function AuthModal({ isOpen, onClose }) {
+  const DEMO_ADMIN_EMAIL = "demo@aicollabhub.com";
+  const DEMO_ADMIN_PASSWORD = "admin123";
+
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
@@ -24,6 +28,8 @@ export default function AuthModal({ isOpen, onClose }) {
   const [forgotLoading, setForgotLoading] = useState(false);
 
   const modalRef = useRef();
+  const demoDesktopRef = useRef();
+  const demoMobileRef = useRef();
   const navigate = useNavigate();
   const { login, register, user } = useAuth();
 
@@ -44,7 +50,11 @@ export default function AuthModal({ isOpen, onClose }) {
   // Click outside to close
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
+      const clickedOutsideModal = modalRef.current && !modalRef.current.contains(e.target);
+      const clickedOutsideDemoDesktop = demoDesktopRef.current && !demoDesktopRef.current.contains(e.target);
+      const clickedOutsideDemoMobile = demoMobileRef.current && !demoMobileRef.current.contains(e.target);
+
+      if (clickedOutsideModal && clickedOutsideDemoDesktop && clickedOutsideDemoMobile) {
         handleClose();
       }
     };
@@ -61,6 +71,26 @@ export default function AuthModal({ isOpen, onClose }) {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (localError) setLocalError("");
+  };
+
+  const useDemoCredentials = () => {
+    setIsLogin(true);
+    setShowForgot(false);
+    setFormData((prev) => ({
+      ...prev,
+      email: DEMO_ADMIN_EMAIL,
+      password: DEMO_ADMIN_PASSWORD,
+    }));
+    setLocalError("");
+  };
+
+  const copyToClipboard = async (text, label) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Copy failed");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -161,6 +191,26 @@ export default function AuthModal({ isOpen, onClose }) {
         }`}
       style={{ background: "rgba(17,24,39,0.85)" }}
     >
+      <div className="hidden xl:block fixed left-6 top-1/2 -translate-y-1/2 z-[60]" ref={demoDesktopRef}>
+        <DemoCredentialsCard
+          email={DEMO_ADMIN_EMAIL}
+          password={DEMO_ADMIN_PASSWORD}
+          onCopyEmail={() => copyToClipboard(DEMO_ADMIN_EMAIL, "Email")}
+          onCopyPassword={() => copyToClipboard(DEMO_ADMIN_PASSWORD, "Password")}
+          onUseInLogin={useDemoCredentials}
+        />
+      </div>
+
+      <div className="xl:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60]" ref={demoMobileRef}>
+        <DemoCredentialsCard
+          email={DEMO_ADMIN_EMAIL}
+          password={DEMO_ADMIN_PASSWORD}
+          onCopyEmail={() => copyToClipboard(DEMO_ADMIN_EMAIL, "Email")}
+          onCopyPassword={() => copyToClipboard(DEMO_ADMIN_PASSWORD, "Password")}
+          onUseInLogin={useDemoCredentials}
+        />
+      </div>
+
       <div
         ref={modalRef}
         className={`bg-gray-900 border border-cyan-700 rounded-xl shadow-lg w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 relative transform ${isOpen ? "modalEnter" : "modalExit"
@@ -312,7 +362,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={() => setShowForgot(true)}
-                  className="text-xs text-cyan-400 hover:underline"
+                  className="text-xs text-cyan-400 hover:underline cursor-pointer"
                 >
                   Forgot Password?
                 </button>

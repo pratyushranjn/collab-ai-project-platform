@@ -11,7 +11,7 @@ This is the GitHub repository for **CollabHub** — a full-stack web app for pro
 The project is organized into two main parts:
 
 - `frontend/` – built with **React**, **Tailwind CSS**, and **Vite**
-- `backend/` – built with **Node.js** and **MongoDB**
+- `backend/` – built with **Node.js** + **Express** (MongoDB, and Socket.IO)
 
 ---
 

@@ -6,6 +6,15 @@ const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
 const { getCache, setCache, deleteCache } = require('../services/redis.service');
 
+const DEMO_ADMIN_EMAIL = 'demo@aicollabhub.com';
+
+function blockDemoAdminWrite(user) {
+  const email = String(user?.email || '').toLowerCase();
+  if (email === DEMO_ADMIN_EMAIL) {
+    throw new ExpressError(403, 'Demo admin is not allowed to perform this action');
+  }
+}
+
 // Helpers for inline ACL on members
 function ensureAdminOrThisPM(user, project) {
   const isAdmin = user.role === 'admin';
@@ -18,6 +27,7 @@ function ensureAdminOrThisPM(user, project) {
 // Create a new project (admin only)
 const createProject = asyncWrap(async (req, res) => {
   if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
+  blockDemoAdminWrite(req.user);
 
   const { name, description, members = [], projectManager } = req.body;
   if (!name || !description) throw new ExpressError(400, 'Project name and description is required');
@@ -102,6 +112,7 @@ const getProjectById = asyncWrap(async (req, res) => {
 // Update project (admin only)
 const updateProject = asyncWrap(async (req, res) => {
   if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
+  blockDemoAdminWrite(req.user);
 
   const updates = { ...req.body };
 
@@ -128,6 +139,7 @@ const updateProject = asyncWrap(async (req, res) => {
 // Delete project (admin only)
 const deleteProject = asyncWrap(async (req, res) => {
   if (req.user.role !== 'admin') throw new ExpressError(403, 'Unauthorized: Admins only');
+  blockDemoAdminWrite(req.user);
 
   const project = await Project.findByIdAndDelete(req.params.id);
   if (!project) throw new ExpressError(404, 'Project not found');
@@ -155,6 +167,7 @@ const deleteProject = asyncWrap(async (req, res) => {
 
 // Add member to project (inline ACL + idempotent)
 const addMember = asyncWrap(async (req, res) => {
+  blockDemoAdminWrite(req.user);
   const { memberId } = req.body;
 
   const project = await Project.findById(req.params.id).select('members projectManager');
@@ -180,6 +193,7 @@ const addMember = asyncWrap(async (req, res) => {
 
 // Remove member from project (inline ACL + idempotent)
 const removeMember = asyncWrap(async (req, res) => {
+  blockDemoAdminWrite(req.user);
   const { id, memberId } = req.params;
 
   const project = await Project.findById(id).select('members projectManager');

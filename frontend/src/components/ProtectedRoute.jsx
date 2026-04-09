@@ -20,11 +20,6 @@ export default function ProtectedRoute({ children, roles }) {
     );
   }
 
-  //  if (!user) {
-  //   // redirect to landing (or whatever is appropriate) instead of returning null
-  //   return <Navigate to="/" replace />;
-  // }
-
 
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;

@@ -2,6 +2,14 @@ const User = require('../models/user');
 const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
 
+const DEMO_ADMIN_EMAIL = 'demo@aicollabhub.com';
+
+function blockDemoAdmin(user) {
+    if (String(user?.email || '').toLowerCase() === DEMO_ADMIN_EMAIL) {
+        throw new ExpressError(403, 'Demo admin is not allowed to perform this action');
+    }
+}
+
 // Get User Profile
 const getUserById = asyncWrap(async (req, res) => {
     const user = await User.findById(req.params.id).select('-password');
@@ -13,13 +21,22 @@ const getUserById = asyncWrap(async (req, res) => {
 
 // Update User Profile (self or admin)
 const updateUser = asyncWrap(async (req, res) => {
+    blockDemoAdmin(req.user);
 
     // Only allow self OR admin
     if (req.user.id !== req.params.id && req.user.role !== 'admin') {
         throw new ExpressError(403, 'Not authorized to update this profile');
     }
 
-    const updates = req.body;
+    const updates = req.body || {};
+
+    if (
+        Object.prototype.hasOwnProperty.call(updates, 'email') &&
+        String(req.user.email || '').toLowerCase() === DEMO_ADMIN_EMAIL
+    ) {
+        throw new ExpressError(403, 'Demo admin email cannot be updated');
+    }
+
     const user = await User.findByIdAndUpdate(
         req.params.id,
         updates,
@@ -34,6 +51,7 @@ const updateUser = asyncWrap(async (req, res) => {
 
 // Update User Role (Admin only)
 const updateUserRole = asyncWrap(async (req, res) => {
+    blockDemoAdmin(req.user);
     if (req.user.role !== 'admin') {
         throw new ExpressError(403, 'Only admin can update roles');
     }

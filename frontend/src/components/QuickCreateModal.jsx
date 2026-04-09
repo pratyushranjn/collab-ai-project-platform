@@ -32,6 +32,16 @@ export default function QuickCreateModal({
   const [project, setProject] = useState({ name: "", description: "", priority: "low" });
   const [projectManagerId, setProjectManagerId] = useState("");
 
+  const maskEmail = (email) => {
+    if (!email || !email.includes("@")) return "";
+    const [local, domain] = email.split("@");
+    if (!local || !domain) return email;
+
+    const start = local.slice(0, 3);
+    const end = local.length > 3 ? local.slice(-1) : "";
+    return `${start}***${end}@${domain}`;
+  };
+
   // Load users + projects when modal opens
   useEffect(() => {
     if (!isOpen) return;
@@ -218,7 +228,7 @@ export default function QuickCreateModal({
               <option value="">Assign to </option>
               {users.map((u) => (
                 <option key={u._id} value={u._id}>
-                  {u.name} ({u.email})
+                  {u.name} ({maskEmail(u.email)})
                 </option>
               ))}
             </select>
@@ -290,7 +300,7 @@ export default function QuickCreateModal({
                 ) : (
                   pmCandidates.map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.name} ({u.email})
+                      {u.name} ({maskEmail(u.email)})
                     </option>
                   ))
                 )}

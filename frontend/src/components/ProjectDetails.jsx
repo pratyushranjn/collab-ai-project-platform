@@ -3,6 +3,7 @@ import api from "../api/api";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import TaskUpdateModal from "./TaskModal";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function ProjectDetails() {
   const params = useParams();
@@ -74,40 +75,73 @@ export default function ProjectDetails() {
       assignedTo: taskForm.assignedTo ? [taskForm.assignedTo] : [],
     };
 
-    await api.post(`/tasks/projects/${projectId}/tasks`, payload);
-    setTaskForm({ title: "", description: "", assignedTo: "", priority: "low" });
-    fetchTasks();
+    try {
+      await api.post(`/tasks/projects/${projectId}/tasks`, payload);
+      setTaskForm({ title: "", description: "", assignedTo: "", priority: "low" });
+      fetchTasks();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create task");
+    }
   };
 
   const updateTaskStatus = async (taskId, status) => {
     if (!isPM && !isAdmin) return;
-    await api.put(`/tasks/${taskId}`, { status });
-    fetchTasks();
+    try {
+      await api.put(`/tasks/${taskId}`, { status });
+      fetchTasks();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update task");
+    }
   };
 
   const deleteTask = async (taskId) => {
     if (!isPM && !isAdmin) return;
     if (!window.confirm("Delete this task?")) return;
-    await api.delete(`/tasks/${taskId}`);
-    setTasks((prev) => prev.filter((t) => t._id !== taskId));
+    try {
+      await api.delete(`/tasks/${taskId}`);
+      setTasks((prev) => prev.filter((t) => t._id !== taskId));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete task");
+    }
   };
 
   const deleteProject = async () => {
     if (!isAdmin) return;
     if (!window.confirm("Delete this project and all tasks?")) return;
-    await api.delete(`/projects/${projectId}`);
-    navigate("/projects");
+    try {
+      await api.delete(`/projects/${projectId}`);
+      navigate("/projects");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete project");
+    }
+  };
+
+  const maskEmail = (email) => {
+    if (!email || !email.includes("@")) return "";
+    const [local, domain] = email.split("@");
+    if (!local || !domain) return email;
+
+    const start = local.slice(0, 3);
+    const end = local.length > 3 ? local.slice(-1) : "";
+    return `${start}***${end}@${domain}`;
   };
 
   const renderAssignees = (assignedTo) => {
     const arr = Array.isArray(assignedTo)
       ? assignedTo
       : assignedTo
-      ? [assignedTo]
-      : [];
+        ? [assignedTo]
+        : [];
 
     if (arr.length === 0) return "—";
-    return arr.map((a) => (typeof a === "string" ? a : a?.name)).join(", ");
+    return arr
+      .map((a) => {
+        if (typeof a === "string") return a;
+        if (!a) return "Unknown user";
+        if (a.email) return `${a.name} (${maskEmail(a.email)})`;
+        return a.name || "Unknown user";
+      })
+      .join(", ");
   };
 
   return (
@@ -200,7 +234,7 @@ export default function ProjectDetails() {
               <option value="">Assign</option>
               {users.map((u) => (
                 <option key={u._id} value={u._id}>
-                  {u.name}
+                  {u.name} ({maskEmail(u.email)})
                 </option>
               ))}
             </select>

@@ -84,6 +84,16 @@ export default function Navbar() {
 
   const defaultProjectId = "";
 
+  const maskEmail = (email) => {
+    if (!email || !email.includes("@")) return "";
+    const [local, domain] = email.split("@");
+    if (!local || !domain) return email;
+
+    const start = local.slice(0, 3);
+    const end = local.length > 3 ? local.slice(-1) : "";
+    return `${start}***${end}@${domain}`;
+  };
+
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-black text-white shadow-md z-50">
@@ -248,6 +258,9 @@ export default function Navbar() {
                         role="menu"
                         className="absolute right-0 mt-2 w-48 bg-black text-white rounded-lg border border-gray-800 shadow-lg py-2 z-50"
                       >
+                        <div className="px-4 pb-2 mb-1 border-b border-gray-800">
+                          <p className="text-xs text-gray-400 truncate">{user?.name}</p>
+                        </div>
                         <button
                           onClick={() => setProfileModalOpen(true)}
                           className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-800 cursor-pointer"

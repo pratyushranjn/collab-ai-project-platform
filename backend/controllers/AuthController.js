@@ -4,7 +4,7 @@ const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
 const { clearTokenCookie, clearOAuthStateCookie, setTokenCookie } = require('../utils/Cookie.helper');
 
-const validRoles = ['user', 'admin', 'project-manager'];
+const validRoles = ['user', 'project-manager'];
 
 const generateToken = (user) => {
   return jwt.sign(

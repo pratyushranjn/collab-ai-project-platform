@@ -25,7 +25,7 @@ export default function Projects() {
   }, []);
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
+    <div className="max-w-5xl mx-auto p-4">
       {loading ? (
         <div className="flex items-center justify-center min-h-screen text-center">
           <div>
@@ -36,53 +36,27 @@ export default function Projects() {
       ) : projects.length === 0 ? (
         <p>No projects yet.</p>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {projects.map((p) => (
             <li
               key={p._id}
-              className="border border-gray-300 p-4 rounded-lg"
+              className="aspect-square bg-transparent border border-blue-500/40 rounded-2xl shadow-lg flex flex-col justify-between items-center p-6 relative group overflow-hidden hover:border-blue-400 hover:shadow-[0_0_16px_0_rgba(37,99,235,0.25)] transition-all duration-300"
             >
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold">{p.name}</h3>
-                  <small className="text-gray-500 block">
-                    {p.description}
-                  </small>
-
-                  <p className="mt-1 text-sm text-gray-600">
-                    <span className="font-medium text-gray-700">
-                      Created by:
-                    </span>{" "}
-                    <span className="italic">
-                      {p?.createdBy?.name || "Unknown"}
-                    </span>
-                    <span className="mx-2 text-gray-400">|</span>
-                    <span className="font-medium text-gray-700">
-                      Project Manager:
-                    </span>{" "}
-                    <span className="italic">
-                      {p?.projectManager?.name || "Not assigned"}
-                    </span>
-                  </p>
+              <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center">
+                <h3 className="text-xl font-bold mb-2 text-white drop-shadow">{p.name}</h3>
+                <small className="text-gray-400 block mb-3 truncate w-full">{p.description}</small>
+                <div className="text-xs text-gray-300 flex flex-col gap-1 mb-2">
+                  <span><span className="font-medium text-gray-200">Created by:</span> <span className="italic">{p?.createdBy?.name || "Unknown"}</span></span>
+                  <span><span className="font-medium text-gray-200">Manager:</span> <span className="italic">{p?.projectManager?.name || "Not assigned"}</span></span>
+                  {p.members?.length ? <span><span className="font-medium text-gray-200">Members:</span> {p.members.length}</span> : null}
                 </div>
-
-                <div className="flex md:justify-end">
-                  <button
-                    onClick={() => navigate(`/projects/${p._id}`)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition cursor-pointer w-full md:w-auto"
-                  >
-                    Open
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigate(`/projects/${p._id}`)}
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full font-semibold shadow"
+                >
+                  Open
+                </button>
               </div>
-
-              {p.members?.length ? (
-                <div className="mt-2">
-                  <small className="text-gray-600">
-                    Members: {p.members.length}
-                  </small>
-                </div>
-              ) : null}
             </li>
           ))}
         </ul>

@@ -27,7 +27,7 @@ const morganMiddleware = (process.env.NODE_ENV === "production")
       Log.create(logEntry).catch((err) => {
         console.error("Log save error:", err.message);
       });
-      return null; // Morgan expects a string, return null to suppress output
+      return null;
     })
   : (req, res, next) => next();
 

@@ -21,6 +21,7 @@ import ProjectDetails from "./components/ProjectDetails";
 import UpdateProfileModal from "./components/UpdateProfileModal";
 import Page404 from "./pages/Page404";
 import ProjectChat from "./pages/ProjectChat";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,6 +57,8 @@ function App() {
                 <Route path="/panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
                 <Route path="/board" element={<ProtectedRoute><KanbanBoardPage /></ProtectedRoute>} />
               </Route>
+
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               {/* 404 */}
               <Route path="*" element={<Page404 />} />

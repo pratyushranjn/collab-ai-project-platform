@@ -2,3 +2,5 @@ node_modules
 
 .env
 Socket.js
+middleware/rateLimit.middleware.js
+middleware/cache.middleware.js

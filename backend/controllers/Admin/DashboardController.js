@@ -4,6 +4,11 @@ const Project = require('../../models/Project');
 const Task = require('../../models/Task');
 const asyncWrap = require('../../utils/asyncWrap');
 const ExpressError = require('../../utils/ExpressError');
+const {
+  setCache,
+  getCache,
+  deleteCache,
+} = require("../../services/redis.service.js");
 
 const daysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
 
@@ -13,6 +18,11 @@ exports.getDashboardSummary = asyncWrap(async (_req, res) => {
     Project.countDocuments(),
     Task.countDocuments(),
   ]);
+
+  const key = `admin:dashboard`;
+
+  const cached = await getCache(key);
+  if (cached) return res.json(cached);
 
   const newUsersLast7d = await User.countDocuments({ createdAt: { $gte: daysAgo(7) } });
   const activeUsers7d = await User.countDocuments({ lastActiveAt: { $gte: daysAgo(7) } });
@@ -50,14 +60,19 @@ exports.getDashboardSummary = asyncWrap(async (_req, res) => {
     { $project: { projectId: '$_id', name: '$project.name', openTasks: 1, _id: 0 } },
   ]);
 
-  res.json({
+  const response = {
     totals: { users: totalUsers, projects: totalProjects, tasks: totalTasks },
     kpis: { newSignups7d: newUsersLast7d, activeUsers7d },
     breakdowns: { tasksByStatus },
     charts: { createdByDay: tasksCreated, completedByDay: tasksCompleted },
     leaders: { topProjects },
-  });
+  };
+
+  await setCache(key, response, 30);
+
+  res.json(response);
 });
+
 
 exports.getUsers = asyncWrap(async (req, res) => {
   const { q = '', role, page = 1, limit = 20 } = req.query;
@@ -92,47 +107,47 @@ exports.getProjectAnalytics = asyncWrap(async (req, res) => {
   ]);
 
 
-const assigneeCounts = await Project.aggregate([
-  { $match: { _id: pid } },
-  { $project: { members: { $ifNull: ['$members', []] } } },
-  { $unwind: '$members' },
-  { $lookup: { from: 'users', localField: 'members', foreignField: '_id', as: 'member' } },
-  { $unwind: '$member' },
-  { $match: { 'member.role': 'user' } },   // only normal users
-  {
-    $lookup: {
-      from: 'tasks',
-      let: { memberId: '$members' },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ['$project', pid] },
-                { $in: ['$$memberId', '$assignedTo'] }
-              ]
+  const assigneeCounts = await Project.aggregate([
+    { $match: { _id: pid } },
+    { $project: { members: { $ifNull: ['$members', []] } } },
+    { $unwind: '$members' },
+    { $lookup: { from: 'users', localField: 'members', foreignField: '_id', as: 'member' } },
+    { $unwind: '$member' },
+    { $match: { 'member.role': 'user' } },   // only normal users
+    {
+      $lookup: {
+        from: 'tasks',
+        let: { memberId: '$members' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ['$project', pid] },
+                  { $in: ['$$memberId', '$assignedTo'] }
+                ]
+              }
             }
-          }
-        },
-        { $count: 'cnt' }
-      ],
-      as: 'taskCounts'
+          },
+          { $count: 'cnt' }
+        ],
+        as: 'taskCounts'
+      }
+    },
+    {
+      $project: {
+        userId: '$member._id',
+        name: '$member.name',
+        email: '$member.email',
+        role: '$member.role',
+        count: { $ifNull: [{ $arrayElemAt: ['$taskCounts.cnt', 0] }, 0] }
+      }
     }
-  },
-  {
-    $project: {
-      userId: '$member._id',
-      name: '$member.name',
-      email: '$member.email',
-      role: '$member.role',
-      count: { $ifNull: [{ $arrayElemAt: ['$taskCounts.cnt', 0] }, 0] }
-    }
-  }
-]);
+  ]);
 
   res.json({
     statusCounts,
-    assigneeCounts,                                      
+    assigneeCounts,
     leadTime: leadTimeStats[0] || { avgHours: 0, maxHours: 0 },
   });
 });

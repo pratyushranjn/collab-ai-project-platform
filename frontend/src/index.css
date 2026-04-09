@@ -4,3 +4,14 @@ body {
   background-color: "#0f172a";
   font-family: 'Google Sans Code', 'Roboto Mono', monospace;
 }
+
+
+select {
+  background-color: #020617; 
+  color: white;
+}
+
+select option {
+  background-color: #020617;
+  color: white;
+}

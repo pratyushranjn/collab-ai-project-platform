@@ -68,11 +68,11 @@ export default function Navbar() {
     return () => document.removeEventListener("keydown", onEsc);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem("notifications");
-    logout();
+    await logout();
+    navigate("/");
     toast.success("Logged out successfully!");
-    setTimeout(() => navigate("/"), 1000);
   };
 
   // Callback when modal creates something
@@ -83,16 +83,6 @@ export default function Navbar() {
   };
 
   const defaultProjectId = "";
-
-  const maskEmail = (email) => {
-    if (!email || !email.includes("@")) return "";
-    const [local, domain] = email.split("@");
-    if (!local || !domain) return email;
-
-    const start = local.slice(0, 3);
-    const end = local.length > 3 ? local.slice(-1) : "";
-    return `${start}***${end}@${domain}`;
-  };
 
   return (
     <>

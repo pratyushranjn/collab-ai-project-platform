@@ -86,9 +86,10 @@ export default function AIIdeas() {
   // Send message
   const send = () => {
     const text = prompt.trim();
-    if (!text || !socketRef.current || thinking) return;
 
+    if (!text || /^[^a-zA-Z0-9]+$/.test(text) || !socketRef.current || thinking) return;
     setThinking(true);
+    
     const clientId = genClientId();
 
     // Add user message immediately
@@ -152,9 +153,9 @@ export default function AIIdeas() {
           if (typeof m.text === "string") {
             cleanText = m.text
               .trim()
-              .replace(/\n{2,}/g, "\n") 
-              .replace(/([a-z])\)\s*\n(?=\w)/gi, "$1)\n\n") 
-              .replace(/(?<!\n)\n(?=[A-Z])/g, "\n\n"); 
+              .replace(/\n{2,}/g, "\n")
+              .replace(/([a-z])\)\s*\n(?=\w)/gi, "$1)\n\n")
+              .replace(/(?<!\n)\n(?=[A-Z])/g, "\n\n");
           }
 
           return (

@@ -1,15 +1,34 @@
-const Project = require('../../models/Project');
-const User = require('../../models/user');
-const asyncWrap = require('../../utils/asyncWrap');
-const ExpressError = require('../../utils/ExpressError');
+const Project = require("../../models/Project");
+const User = require("../../models/user");
+const asyncWrap = require("../../utils/asyncWrap");
+const ExpressError = require("../../utils/ExpressError");
+const {
+  setCache,
+  getCache,
+  deleteCache,
+} = require("../../services/redis.service.js");
 
 const adminListProjects = asyncWrap(async (req, res) => {
-  const q     = (req.query.q || '').trim();
-  const page  = Math.max(parseInt(req.query.page || '1', 10), 1);
-  const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10), 1), 100);
+  const q = (req.query.q || "").trim();
+  const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+  const limit = Math.min(
+    Math.max(parseInt(req.query.limit || "10", 10), 1),
+    100,
+  );
+
+  const key = `admin:project:${q}:${page}:${limit}`;
+
+  //  Check cache FIRST
+  const cached = await getCache(key);
+  if (cached) return res.json(cached);
 
   const match = q
-    ? { $or: [{ name: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }] }
+    ? {
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+      ],
+    }
     : {};
 
   const total = await Project.countDocuments(match);
@@ -21,50 +40,59 @@ const adminListProjects = asyncWrap(async (req, res) => {
     { $limit: limit },
 
     // tasks for counts
-    { $lookup: {
-        from: 'tasks',
-        localField: '_id',
-        foreignField: 'project',
-        as: 'tasks'
-    }},
+    {
+      $lookup: {
+        from: "tasks",
+        localField: "_id",
+        foreignField: "project",
+        as: "tasks",
+      },
+    },
 
     // populate PM
-    { $lookup: {
-        from: 'users',
-        localField: 'projectManager',
-        foreignField: '_id',
-        as: 'pm'
-    }},
-    { $unwind: { path: '$pm', preserveNullAndEmptyArrays: true }},
+    {
+      $lookup: {
+        from: "users",
+        localField: "projectManager",
+        foreignField: "_id",
+        as: "pm",
+      },
+    },
+    { $unwind: { path: "$pm", preserveNullAndEmptyArrays: true } },
 
     // populate createdBy
-    { $lookup: {
-        from: 'users',
-        localField: 'createdBy',
-        foreignField: '_id',
-        as: 'creator'
-    }},
-    { $unwind: { path: '$creator', preserveNullAndEmptyArrays: true }},
+    {
+      $lookup: {
+        from: "users",
+        localField: "createdBy",
+        foreignField: "_id",
+        as: "creator",
+      },
+    },
+    { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
 
     // add counts & shape fields
-    { $addFields: {
-        membersCount: { $size: { $ifNull: ['$members', []] } },
-        totalTasks: { $size: '$tasks' },
+    {
+      $addFields: {
+        membersCount: { $size: { $ifNull: ["$members", []] } },
+        totalTasks: { $size: "$tasks" },
         doneTasks: {
           $size: {
             $filter: {
-              input: '$tasks',
-              as: 't',
-              cond: { $eq: ['$$t.status', 'done'] }
-            }
-          }
+              input: "$tasks",
+              as: "t",
+              cond: { $eq: ["$$t.status", "done"] },
+            },
+          },
         },
-        projectManager: '$pm',
-        createdBy: '$creator'
-    }},
+        projectManager: "$pm",
+        createdBy: "$creator",
+      },
+    },
 
     // final projection (trim payload)
-    { $project: {
+    {
+      $project: {
         _id: 1,
         name: 1,
         description: 1,
@@ -73,40 +101,52 @@ const adminListProjects = asyncWrap(async (req, res) => {
         totalTasks: 1,
         doneTasks: 1,
         projectManager: { _id: 1, name: 1, email: 1 },
-        createdBy: { _id: 1, name: 1, email: 1 }
+        createdBy: { _id: 1, name: 1, email: 1 },
         // omit raw members/tasks arrays to keep response light
-    }}
+      },
+    },
   ]);
 
-  res.json({
+  const response = {
     success: true,
     page,
     totalPages: Math.max(Math.ceil(total / limit), 1),
     total,
-    data
-  });
+    data,
+  };
+
+  // Store full response
+  await setCache(key, response, 60);
+
+  res.json(response);
 });
+
 
 const adminAddMemberByEmail = asyncWrap(async (req, res) => {
   const { id } = req.params;
   const { email } = req.body;
-  if (!email) throw new ExpressError(400, 'Email is required');
+  if (!email) throw new ExpressError(400, "Email is required");
 
-  const user = await User.findOne({ email }).select('_id');
-  if (!user) throw new ExpressError(404, 'User not found with that email');
+  const user = await User.findOne({ email }).select("_id");
+  if (!user) throw new ExpressError(404, "User not found with that email");
 
   const project = await Project.findByIdAndUpdate(
     id,
     { $addToSet: { members: user._id } },
-    { new: true }
+    { new: true },
   )
-    .populate('members', 'name email role')
-    .populate('createdBy', 'name email role')
-    .populate('projectManager', 'name email role');
+    .populate("members", "name email role")
+    .populate("createdBy", "name email role")
+    .populate("projectManager", "name email role");
 
-  if (!project) throw new ExpressError(404, 'Project not found');
+  if (!project) throw new ExpressError(404, "Project not found");
 
-  res.json({ success: true, message: 'Member added', data: project });
+  // Invalidate admin project list and dashboard cache after modifying project data
+  await deleteCache('admin:project:*');
+  await deleteCache('admin:dashboard');
+
+  res.json({ success: true, message: "Member added", data: project });
 });
+
 
 module.exports = { adminListProjects, adminAddMemberByEmail };

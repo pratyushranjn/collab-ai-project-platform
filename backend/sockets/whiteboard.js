@@ -2,33 +2,44 @@ const Whiteboard = require("../models/Whiteboard");
 
 // get or create board
 async function roomState(roomId) {
-  let board = await Whiteboard.findOne({ roomId });
+  const board = await Whiteboard.findOneAndUpdate(
+    { roomId },
+    {
+      $setOnInsert: {
+        roomId,
+        data: { nodes: [], lines: [] },
+        actions: [],
+      },
+    },
+    { new: true, upsert: true }
+  );
 
-  if (!board) {
-    board = new Whiteboard({ roomId });
-    await board.save();
-    console.log("[Whiteboard] Created new board:", roomId);
-  }
-
-  return board
+  return board;
 }
 
 // save changes + log action
 async function saveBoard(roomId, updateFn, action) {
-  let board = await Whiteboard.findOne({ roomId });
-  if (!board) {
-    board = new Whiteboard({ roomId });
-  }
+  const board = await Whiteboard.findOneAndUpdate(
+    { roomId },
+    {
+      $setOnInsert: {
+        roomId,
+        data: { nodes: [], lines: [] },
+        actions: [],
+      },
+    },
+    { new: true, upsert: true }
+  );
 
-  // apply update
+  // apply update safely
   updateFn(board.data);
 
-  // force mongoose to notice nested object
   board.markModified("data");
 
   if (action) board.actions.push(action);
 
   await board.save();
+
   return board.data;
 }
 

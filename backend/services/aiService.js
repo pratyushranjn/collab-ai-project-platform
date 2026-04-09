@@ -12,33 +12,59 @@ function extractText(response) {
   );
 }
 
+async function safeGenerate(fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error("AI Error:", err.message);
+    return "AI is busy, try again.";
+  }
+}
+
 // history: [{ role:'user'|'model', text }], prompt: string
 async function generateIdeas(history = [], prompt = "") {
+  const trimmedHistory = history.slice(-6);
+
   const contents = [
-    ...history.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
-    { role: "user", parts: [{ text: prompt }] }
+    ...trimmedHistory.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+    {
+      role: "user",
+      parts: [{ text: `Reply in MAX 2 short sentences. No explanation.\n\n${prompt}` }]
+    }
   ];
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-001",
-    contents,
-    generationConfig: { temperature: 0.2 },
-  });
+  return safeGenerate(async () => {
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-lite-latest",
+      contents,
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 120,
+      },
+    });
 
-  return extractText(response);
+    return extractText(response)?.trim() || "No useful response. Try again.";
+  });
 }
 
 async function analyzeTasks(tasks = []) {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash-001",
-    contents: [{
-      role: "user",
-      parts: [{ text: `Analyze these tasks JSON:\n${JSON.stringify(tasks)}` }]
-    }],
-    generationConfig: { temperature: 0.2 },
-  });
+  return safeGenerate(async () => {
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-lite-latest",
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `Give ONLY 3 short bullet points. No extra text.\n${JSON.stringify(tasks)}`
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 120
+      },
+    });
 
-  return extractText(response) || "No analysis generated.";
+    return extractText(response)?.trim() || "No analysis generated.";
+  });
 }
 
 module.exports = { generateIdeas, analyzeTasks };

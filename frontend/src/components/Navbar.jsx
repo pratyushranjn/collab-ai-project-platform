@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { LogOut, Bell, Plus, User } from "lucide-react";
 import toast from "react-hot-toast";
@@ -12,10 +12,9 @@ import { useNotifications } from "../context/NotificationsContext";
 
 export default function Navbar() {
   const { user, logout, showLoginModal, closeLoginModal, modalOpen } = useAuth();
-  const { items: notifications, unread, markAllRead, removeNotification } = useNotifications();
+  const { items: notifications, unread, removeNotification } = useNotifications();
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Modals
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -70,7 +69,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("notifications"); 
+    localStorage.removeItem("notifications");
     logout();
     toast.success("Logged out successfully!");
     setTimeout(() => navigate("/"), 1000);
@@ -90,7 +89,7 @@ export default function Navbar() {
       <nav className="fixed top-0 left-0 w-full bg-black text-white shadow-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center h-16 justify-end md:justify-between">
-       
+
             <Link to="/projects" className="hidden md:flex items-center space-x-2">
               <img
                 src="/humanoid-robot_18220260.png"
@@ -105,7 +104,16 @@ export default function Navbar() {
                 <>
                   <Link
                     to="/ai"
-                    className="hidden md:block px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 hover:opacity-90 transition text-sm font-medium"
+                    className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full
+                      text-sm font-semibold text-white
+
+                     border border-purple-500/80
+                      shadow-[0_0_8px_rgba(168,85,247,0.5)]
+
+                      hover:shadow-[0_0_14px_rgba(168,85,247,0.9)]
+                      hover:scale-105
+
+                      transition-all duration-300"
                   >
                     ✨ Ask AI
                   </Link>

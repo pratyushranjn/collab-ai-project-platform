@@ -4,7 +4,7 @@ const Task = require('../models/Task');
 const User = require('../models/user');
 const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
-
+const { getCache, setCache, deleteCache } = require('../services/redis.service');
 
 // Helpers for inline ACL on members
 function ensureAdminOrThisPM(user, project) {
@@ -57,6 +57,12 @@ const getProjects = asyncWrap(async (req, res) => {
     return res.json({ success: true, data: projects });
   }
 
+  const key = `user:${req.user.id}`;
+
+  const cached = await getCache(key);
+
+  if (cached) return res.json(cached);
+
   // Projects where the user has any assigned task
   const taskProjectIds = await Task.distinct('project', { assignedTo: req.user.id });
 
@@ -71,6 +77,11 @@ const getProjects = asyncWrap(async (req, res) => {
     .populate('members', 'name email role')
     .populate('createdBy', 'name email role')
     .populate('projectManager', 'name email role');
+
+  const response = { success: true, data: projects };
+
+  // store in Redis
+  await setCache(key, response, 60)
 
   res.json({ success: true, data: projects });
 });
@@ -123,6 +134,16 @@ const deleteProject = asyncWrap(async (req, res) => {
 
   // Delete all tasks belonging to this project
   const { deletedCount } = await Task.deleteMany({ project: project._id });
+
+  await deleteCache(`user:${project.createdBy}`);
+
+  if (project.projectManager) {
+    await deleteCache(`user:${project.projectManager}`);
+  }
+
+  for (let member of project.members) {
+    await deleteCache(`user:${member}`);
+  }
 
   res.json({
     success: true,

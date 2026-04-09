@@ -1,66 +1,83 @@
-# 🚀 Collaborative AI-Powered Project Platform  
+# 🚀 Collaborative AI-Powered Project Platform
 
-Hey there! 👋  
-This is the GitHub repository for **CollabHub** — a full-stack web app for project planning, task tracking, team chat, and whiteboarding.  
+This is the GitHub repository for **CollabHub** — a full-stack web app for project planning, task tracking, team chat, and whiteboard.
 
-🔗 **Repository Link:** [collab-ai-project-platform](https://github.com/pratyushranjn/collab-ai-project-platform)  
-
----
-
-## 📁 Folder Structure  
-
-The project is organized into two main parts:  
-
-- `frontend/` – built with **React**, **Tailwind CSS**, and **Vite**  
-- `backend/` – built with **Node.js** and **MongoDB**  
+🔗 **Repository Link:** [collab-ai-project-platform](https://github.com/pratyushranjn/collab-ai-project-platform)
 
 ---
 
-## 🔑 Key Features  
+## 📁 Folder Structure
 
-- 🔐 **User Authentication & Role-Based Access Control (RBAC)** – Admin, Manager, Member  
-- 🤖 **AI Assistant** – idea generation and brainstorming  
-- 📋 **Kanban-style Task Management** – with drag & drop  
-- 🖊 **Real-time Whiteboard** – shapes, lines, mind maps, and board clearing  
-- 💬 **Project-based Group Chat & Threaded Discussions** – real-time messaging with notifications (Socket.IO)  
-- 🗂 **Project & Task APIs** – CRUD operations with MongoDB + Express  
-- 📊 **Analytics Dashboard** – project and task metrics  
-- ⚙️ **Admin Panel** – manage projects, users, and roles  
+The project is organized into two main parts:
+
+- `frontend/` – built with **React**, **Tailwind CSS**, and **Vite**
+- `backend/` – built with **Node.js** and **MongoDB**
 
 ---
 
-## 🛠️ Tech Stack  
+## 🔑 Key Features
 
-- **Frontend:** React, Vite, Tailwind CSS  
-- **Backend:** Node.js, Express, MongoDB  
-- **Real-time:** Socket.IO  
-- **Auth:** JWT (JSON Web Tokens)  
-- **AI Integration:** Gemini API  
+- 🔐 **Authentication & RBAC** – Users can sign up/login using email or Google/GitHub. Different roles like Admin, Manager, and Member are supported.
+- 🔑 **Forgot Password** – Users can reset their password securely using email.
+- 🤖 **AI Assistant** – Helps generate ideas and suggestions using AI.
+- 📋 **Task Management (Kanban Board)** – Drag and drop tasks between different stages.
+- 🖊 **Real-time Whiteboard** – Draw shapes, lines, and clear the board in real time.
+- 💬 **Team Chat** – Project-based chat with real-time messaging using Socket.IO.
+- 🗂 **Project & Task APIs** – CRUD operations with MongoDB + Express
+- 📊 **Dashboard** – Shows basic analytics of projects and tasks.
+- ⚙️ **Admin Panel** – Manage users, roles, and projects.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Node.js, Express, MongoDB, Redis
+- **Real-time:** Socket.IO
+- **Auth:** JWT, Google OAuth, GitHub OAuth
+- **Caching:** Redis
+- **AI Integration:** Gemini API
+
+---
+
+## 🆕 Recent Updates
+
+-Added Google and GitHub login
+-Added forgot/reset password feature
+-Used Redis to improve performance in some parts
+-Improved UI and user experience
+-Improved AI responses
 
 ---
 
 ## 🖼️ UI Previews
 
 ### 🏠 Landing Page
+
 ![Landing Page](frontend/public/LandingPage.png)
 
 ### 🔐 Auth UI
+
 ![Auth UI](frontend/public/AuthUi.png)
 
 ### 🤖 AI Ideas
+
 ![AI Ideas](frontend/public/AIideas.png)
 
-### 🧩 Kanban Board 
+### 🧩 Kanban Board
+
 ![Kanban Board](frontend/public/Board.png)
 
 ### 📁 Projects
+
 ![Projects](frontend/public/Projects.png)
 
 ### ✅ Tasks
+
 ![Tasks](frontend/public/Tasks.png)
 
 ### 📊 Dashboard
+
 ![Dashboard](frontend/public/Dashboard.png)
 
 ---
-

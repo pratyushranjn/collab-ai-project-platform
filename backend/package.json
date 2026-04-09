@@ -10,20 +10,30 @@
   },
   "main": "server.js",
   "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@google/genai": "^1.15.0",
+    "axios": "^1.13.6",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.17.0",
     "morgan": "^1.10.1",
+    "nodemailer": "^8.0.4",
+    "redis": "^5.11.0",
     "socket.io": "^4.8.1",
     "websocket": "^1.0.35"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

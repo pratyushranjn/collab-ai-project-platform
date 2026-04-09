@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const asyncWrap = require('../utils/asyncWrap');
 const ExpressError = require('../utils/ExpressError');
+const { clearTokenCookie, clearOAuthStateCookie, setTokenCookie } = require('../utils/Cookie.helper');
 
 const validRoles = ['user', 'admin', 'project-manager'];
 
@@ -13,7 +13,6 @@ const generateToken = (user) => {
     { expiresIn: '1d' }
   );
 };
-
 
 // Register User
 const Register = asyncWrap(async (req, res) => {
@@ -29,31 +28,26 @@ const Register = asyncWrap(async (req, res) => {
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ExpressError(400, 'Email already registered');
+    if (existingUser.password) {
+      throw new ExpressError(400, 'Email already registered. Please login.');
+    } else {
+      throw new ExpressError(400, 'Account exists. Please login using Google or GitHub.');
+    }
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     name,
     email,
-    password: hashedPassword,
+    password,
     role: role || 'user',
   });
 
   const token = generateToken(user);
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  setTokenCookie(res, token);
 
   res.status(201).json({
     success: true,
     message: 'User registered successfully',
-    token,
     user: {
       id: user._id,
       name: user.name,
@@ -76,24 +70,21 @@ const Login = asyncWrap(async (req, res) => {
     throw new ExpressError(400, 'User not found');
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  if (!user.password) {
+    throw new ExpressError(400, "Please login using Google or GitHub");
+  }
+
+  const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     throw new ExpressError(400, 'Invalid email or password');
   }
 
   const token = generateToken(user);
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  setTokenCookie(res, token);
 
   res.json({
     success: true,
     message: 'Login successful',
-    token,
     user: {
       id: user._id,
       name: user.name,
@@ -103,13 +94,11 @@ const Login = asyncWrap(async (req, res) => {
   });
 });
 
+
 // Logout User
 const Logout = asyncWrap(async (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  });
+  clearTokenCookie(res);
+  clearOAuthStateCookie(res);
   res.json({ success: true, message: "Logged out successfully" });
 });
 
@@ -132,4 +121,5 @@ module.exports = {
   login: Login,
   logout: Logout,
   getMe,
+  generateToken
 };

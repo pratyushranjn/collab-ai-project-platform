@@ -9,7 +9,7 @@ const {
   removeMember,
 } = require('../controllers/projectController');
 const { protect, authorize } = require('../middleware/authMiddleware');
-const { ensureProjectAccess } = require('../middleware/projectAccess'); 
+const { ensureProjectAccess } = require('../middleware/projectAccess');
 
 const router = express.Router();
 

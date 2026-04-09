@@ -1,13 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./db/db');
+const connectDB = require('./config/db');
 const http = require('http');
 const setupSocket = require('./sockets/index');
 const cookieParser = require('cookie-parser');
 const helmet = require("helmet");
-
+const { connectRedis, client } = require("./config/redis")
 const morganMiddleware = require("./middleware/logger");
+const mongoose = require("mongoose");
 
 const authRoute = require('./routes/AuthRoutes');
 const projectRoutes = require('./routes/ProjectRoutes');
@@ -17,17 +18,16 @@ const aiRoutes = require('./routes/aiRoutes')
 const chatRoutes = require('./routes/chatRoutes')
 const dashboardRoutes = require('./routes/Admin/dashboardRoutes');
 const panelRoutes = require('./routes/Admin/panelRoutes');
+const passwordRecovery = require("./routes/forgot-passwordRoute.js");
+
 
 const app = express();
 const server = http.createServer(app);
 
-// Connect to MongoDB
-connectDB();
-
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174",
-  "https://collab-ai-hub.vercel.app"
+  "https://collab-ai-hub.vercel.app",
+  "https://www.pratyushnode.tech"
 ];
 
 // Middlewares
@@ -47,7 +47,7 @@ app.use(cookieParser());
 app.use(morganMiddleware);
 
 // Routes
-app.use('/api/auth', authRoute);
+app.use('/api/auth', [authRoute, passwordRecovery]);
 app.use('/api/users', userRoutes)
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes)
@@ -81,7 +81,32 @@ app.use((err, req, res, next) => {
 
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
 
+(async () => {
+  try {
+    await connectDB();
+    await connectRedis();
+
+    server.listen(PORT, () => {
+      console.log(`Server running on ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Startup error:", err);
+    process.exit(1);
+  }
+})();
+
+
+process.on("SIGINT", async () => {
+  console.log("Shutting down...");
+
+  if (client.isOpen) {
+    await client.quit();
+    console.log("Redis disconnected");
+  }
+
+  await mongoose.connection.close();
+  console.log("MongoDB disconnected");
+
+  process.exit(0);
+});

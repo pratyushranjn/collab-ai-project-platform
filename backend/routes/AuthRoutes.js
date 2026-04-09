@@ -17,6 +17,7 @@ const rateLimit = require("express-rate-limit");
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
+const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI;
 const FRONTEND_URL = process.env.CLIENT_URL;
 
 // Limit auth endpoints
@@ -32,9 +33,11 @@ router.use(
         "/login",
         "/register",
         "/google",
+        "/google/callback",
         "/oauth2/redirect/google",
         "/github",
         "/github/callback",
+        "/oauth2/redirect/github",
     ],
     authLimiter,
 );
@@ -65,7 +68,7 @@ router.get("/google", (req, res) => {
 });
 
 //  Step C → D
-router.get("/oauth2/redirect/google", async (req, res) => {
+const handleGoogleCallback = async (req, res) => {
     const { code, state } = req.query;
     const storedState = req.cookies.oauth_state;
 
@@ -114,7 +117,7 @@ router.get("/oauth2/redirect/google", async (req, res) => {
                 }
             });
         } else {
-            //  LINK GOOGLE ACCOUNT
+            //  Link google account
             if (!user.providers?.google?.id) {
                 // Safe Nested Updates
                 user.set("providers.google.id", googleUser.id);
@@ -134,7 +137,7 @@ router.get("/oauth2/redirect/google", async (req, res) => {
         console.log("Google auth callback error: ", err);
         res.redirect(FRONTEND_URL);
     }
-});
+};
 
 
 router.get('/github', (req, res) => {
@@ -148,6 +151,7 @@ router.get('/github', (req, res) => {
 
     const params = new URLSearchParams({
         client_id: process.env.GITHUB_CLIENT_ID,
+        redirect_uri: GITHUB_REDIRECT_URI,
         scope: "user:email",
         state
     });
@@ -158,7 +162,7 @@ router.get('/github', (req, res) => {
 });
 
 
-router.get('/github/callback', async (req, res) => {
+const handleGithubCallback = async (req, res) => {
     const { code, state } = req.query;
     const storedState = req.cookies.oauth_state;
 
@@ -173,6 +177,7 @@ router.get('/github/callback', async (req, res) => {
             {
                 client_id: process.env.GITHUB_CLIENT_ID,
                 client_secret: process.env.GITHUB_CLIENT_SECRET,
+                redirect_uri: GITHUB_REDIRECT_URI,
                 code
             },
             {
@@ -250,7 +255,13 @@ router.get('/github/callback', async (req, res) => {
         console.log("GitHub auth error:", err);
         res.redirect(FRONTEND_URL);
     }
-})
+};
+
+router.get("/google/callback", handleGoogleCallback);
+router.get("/oauth2/redirect/google", handleGoogleCallback);
+
+router.get('/github/callback', handleGithubCallback);
+router.get('/oauth2/redirect/github', handleGithubCallback);
 
 
 router.post("/register", register);

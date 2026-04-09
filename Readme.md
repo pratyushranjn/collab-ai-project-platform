@@ -42,11 +42,11 @@ The project is organized into two main parts:
 
 ## 🆕 Recent Updates
 
--Added Google and GitHub login
--Added forgot/reset password feature
--Used Redis to improve performance in some parts
--Improved UI and user experience
--Improved AI responses
+- Added Google and GitHub login  
+- Implemented forgot/reset password feature 
+- Used Redis to improve performance  
+- Improved UI and overall user experience  
+- Enhanced AI response quality  
 
 ---
 

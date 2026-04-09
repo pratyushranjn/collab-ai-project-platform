@@ -1,20 +1,37 @@
 const { client } = require("../config/redis");
 
+const canUseRedis = () => client && client.isOpen;
+
 const setCache = async (key, value, ttl = 60) => {
-    await client.set(key, JSON.stringify(value), {
-        EX: ttl,
-    });
+    if (!canUseRedis()) return;
+    try {
+        await client.set(key, JSON.stringify(value), {
+            EX: ttl,
+        });
+    } catch (_err) {
+        return;
+    }
 };
 
 const getCache = async (key) => {
-    const data = await client.get(key);
-    return data && JSON.parse(data);
+    if (!canUseRedis()) return null;
+    try {
+        const data = await client.get(key);
+        return data && JSON.parse(data);
+    } catch (_err) {
+        return null;
+    }
 };
 
 const deleteCache = async (pattern) => {
-    const keys = await client.keys(pattern);
-    if (keys.length) {
-        await client.del(keys);
+    if (!canUseRedis()) return;
+    try {
+        const keys = await client.keys(pattern);
+        if (keys.length) {
+            await client.del(keys);
+        }
+    } catch (_err) {
+        return;
     }
 };
 

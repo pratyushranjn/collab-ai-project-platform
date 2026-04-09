@@ -100,7 +100,7 @@ const PORT = process.env.PORT || 3000;
 process.on("SIGINT", async () => {
   console.log("Shutting down...");
 
-  if (client.isOpen) {
+  if (client && client.isOpen) {
     await client.quit();
     console.log("Redis disconnected");
   }

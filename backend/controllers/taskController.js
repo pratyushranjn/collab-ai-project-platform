@@ -19,6 +19,8 @@ const createTask = asyncWrap(async (req, res) => {
     const { projectId } = req.params;
     const { title, description, assignedTo, priority } = req.body;
 
+    if (!title || !title.trim()) throw new ExpressError(400, 'Task title is required');
+
     const project = await Project.findById(projectId);
     if (!project) throw new ExpressError(404, 'Project not found');
 
@@ -92,7 +94,6 @@ const getTasks = asyncWrap(async (req, res) => {
 const updateTask = asyncWrap(async (req, res) => {
     blockDemoAdminWrite(req.user);
     const updates = req.body;
-    console.log(updates);
     const task = await Task.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     if (!task) throw new ExpressError(404, 'Task not found');
 

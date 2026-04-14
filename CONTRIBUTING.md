@@ -168,8 +168,8 @@ docs: improve CONTRIBUTING guide
 Open a [GitHub Issue](https://github.com/pratyushranjn/collab-ai-project-platform/issues) and include:
 
 - A clear and concise description of the bug.
-- Steps to reproduce the behaviour.
-- Expected vs. actual result.
+- Steps to reproduce the behavior.
+- Expected vs. actual behavior.
 - Screenshots or error logs if applicable.
 - Environment details (OS, browser, Node version).
 

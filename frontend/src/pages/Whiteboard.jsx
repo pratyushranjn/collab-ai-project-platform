@@ -216,9 +216,9 @@ export default function WhiteBoard() {
 
   return (
     <div className="flex flex-col items-center p-4 sm:p-5 space-y-4 sm:space-y-5">
-      <h1 className="text-2xl sm:text-3xl font-bold text-center">
+      {/* <h1 className="text-2xl sm:text-3xl font-bold text-center">
         Whiteboard
-      </h1>
+      </h1> */}
 
       <div className="flex gap-4 text-2xl cursor-pointer select-none">
         <span

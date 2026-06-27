@@ -7,7 +7,7 @@ import { NotificationsProvider } from "./context/NotificationsContext";
 import LandingPage from "./pages/LandingPage";
 import Projects from "./components/Projects";
 import AIIdeas from "./pages/AiIdeas";
-import MindMap from "./pages/MindMap";
+import WhiteBoard from "./pages/Whiteboard";
 import AdminPanel from "./pages/AdminPanel";
 import Dashboard from "./pages/Dashboard";
 import KanbanBoardPage from "./pages/KanbanBoard";
@@ -52,7 +52,7 @@ function App() {
                 {/* Other app routes */}
                 <Route path="/chat" element={<ProtectedRoute><ChatUI /></ProtectedRoute>} />
                 <Route path="/ai" element={<ProtectedRoute><AIIdeas /></ProtectedRoute>} />
-                <Route path="/mindmap" element={<ProtectedRoute><MindMap /></ProtectedRoute>} />
+                <Route path="/whiteboard" element={<ProtectedRoute><WhiteBoard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute ><Dashboard /></ProtectedRoute>} />
                 <Route path="/panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
                 <Route path="/board" element={<ProtectedRoute><KanbanBoardPage /></ProtectedRoute>} />

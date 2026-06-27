@@ -3,7 +3,7 @@ import { Stage, Layer, Circle, Rect, Text, Line } from "react-konva";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 
-export default function MindMap() {
+export default function WhiteBoard() {
   const { user } = useAuth();
   const socket = useSocket();
 
@@ -217,7 +217,7 @@ export default function MindMap() {
   return (
     <div className="flex flex-col items-center p-4 sm:p-5 space-y-4 sm:space-y-5">
       <h1 className="text-2xl sm:text-3xl font-bold text-center">
-        Whiteboard & Mindmap🧠
+        Whiteboard
       </h1>
 
       <div className="flex gap-4 text-2xl cursor-pointer select-none">

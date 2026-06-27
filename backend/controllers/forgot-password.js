@@ -33,12 +33,18 @@ const forgetPassword = async (req, res) => {
         const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
         const message = `
-        <h3>Password Reset Request</h3>
-        <p>Hello ${user.name},</p>
-        <p>You requested a password reset. Click the link below:</p>
-        <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-        <p>This link will expire in 10 minutes.</p>
-    `;
+            <p>Hello ${user.name || "User"}, 👋</p>
+            <p>We received a request to reset your password.</p>
+            <p>
+                Click the link below to set a new password:<br/>
+                <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+            </p>
+            <p>This link will expire in 10 minutes.</p>
+            <p>
+                This link is valid for a short time and can be used only once. 
+                If this wasn’t you, please ignore this message.
+            </p>
+        `;
 
         // Handle email failure separately
         try {
@@ -70,7 +76,7 @@ const forgetPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         const { token: resetToken } = req.params;
-        
+
         const hashedToken = crypto
             .createHash("sha256")
             .update(resetToken)

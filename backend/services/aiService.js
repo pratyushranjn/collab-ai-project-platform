@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenAI } = require("@google/genai");
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -26,11 +26,15 @@ async function generateIdeas(history = [], prompt = "") {
   const trimmedHistory = history.slice(-6);
 
   const contents = [
-    ...trimmedHistory.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+    ...trimmedHistory.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
     {
       role: "user",
-      parts: [{ text: `Reply in MAX 2 short sentences. No explanation.\n\n${prompt}` }]
-    }
+      parts: [
+        {
+          text: `Reply in MAX 2 short sentences. No explanation.\n\n${prompt}`,
+        },
+      ],
+    },
   ];
 
   return safeGenerate(async () => {
@@ -51,15 +55,31 @@ async function analyzeTasks(tasks = []) {
   return safeGenerate(async () => {
     const response = await ai.models.generateContent({
       model: "gemini-flash-lite-latest",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Give ONLY 3 short bullet points. No extra text.\n${JSON.stringify(tasks)}`
-        }]
-      }],
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `
+                    You are a project analytics expert.
+
+                    Analyze this task data and give:
+                    1. Productivity insight
+                    2. Risk or delay insight
+                    3. Team performance insight
+
+                    ONLY 3 bullet points. No extra text.
+
+                    Data:
+                    ${JSON.stringify(tasks)}
+                    `,
+            },
+          ],
+        },
+      ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 120
+        maxOutputTokens: 120,
       },
     });
 

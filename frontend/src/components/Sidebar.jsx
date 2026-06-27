@@ -40,7 +40,7 @@ export default function Sidebar() {
     { path: "/projects", label: "Projects" },
     { path: "/task", label: "Task" },
     { path: "/ai", label: "AI Ideas" },
-    { path: "/mindmap", label: "Mind Map" },
+    { path: "/whiteboard", label: "White Board" },
     { path: "/board", label: "Kanban Board" },
     { path: "/chat", label: "Chat" },
     { path: "/dashboard", label: "Dashboard" },

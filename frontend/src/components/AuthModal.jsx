@@ -149,8 +149,7 @@ export default function AuthModal({ isOpen, onClose }) {
       setForgotLoading(true);
 
       const baseUrl = import.meta.env.VITE_BASE_URL;
-      console.log("API URL:", `${baseUrl}/forgot-password`);
-
+ 
       if (!baseUrl) {
         toast.error("Server configuration error");
         setForgotLoading(false);

@@ -1,34 +1,39 @@
-const morgan = require("morgan");
 const Log = require("../models/Log");
 
 function normalizeIp(ip) {
   if (!ip) return null;
 
-  if (ip === "::1") return "127.0.0.1";              // Localhost IPv6
-  if (ip.startsWith("::ffff:")) return ip.slice(7); // IPv6-mapped IPv4
+  if (ip === "::1") return "127.0.0.1";
+  if (ip.startsWith("::ffff:")) return ip.slice(7);
+
   return ip;
 }
 
+const loggerMiddleware =
+  process.env.NODE_ENV === "production"
+    ? (req, res, next) => {
+        const start = Date.now();
 
-// Custom Morgan middleware: only log to DB in production, otherwise do nothing
-const morganMiddleware = (process.env.NODE_ENV === "production")
-  ? morgan(function (tokens, req, res) {
-      const logEntry = {
-        method: tokens.method(req, res),
-        url: tokens.url(req, res),
-        status: Number(tokens.status(req, res)),
-        responseTime: Number(tokens["response-time"](req, res)),
-        ip: normalizeIp(req.ip || req.socket.remoteAddress),
-        userAgent: req.get("User-Agent"),
-        userId: req.user ? req.user.id : null,
-        userEmail: req.user ? req.user.email : null,
-        role: req.user ? req.user.role : null,
-      };
-      Log.create(logEntry).catch((err) => {
-        console.error("Log save error:", err.message);
-      });
-      return null;
-    })
-  : (req, res, next) => next();
+        res.on("finish", async () => {
+          try {
+            await Log.create({
+              method: req.method,
+              url: req.originalUrl,
+              status: res.statusCode,
+              responseTime: Date.now() - start,
+              ip: normalizeIp(req.ip || req.socket.remoteAddress),
+              userAgent: req.get("User-Agent"),
+              userId: req.user?.id || null,
+              userEmail: req.user?.email || null,
+              role: req.user?.role || null,
+            });
+          } catch (err) {
+            console.error("Log save error:", err.message);
+          }
+        });
 
-module.exports = morganMiddleware;
+        next();
+      }
+    : (req, res, next) => next();
+
+module.exports = loggerMiddleware;
